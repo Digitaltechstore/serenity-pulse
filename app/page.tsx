@@ -1550,16 +1550,85 @@ function ScanScreen() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }, // Use back camera on mobile
-      })
-      setCameraStream(stream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API not supported in this browser")
       }
-    } catch (error) {
-      console.error("Camera access denied:", error)
-      alert("Camera access is required to scan food. Please enable camera permissions.")
+
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevices = devices.filter((device) => device.kind === "videoinput")
+
+      if (videoDevices.length === 0) {
+        throw new Error("No camera devices found")
+      }
+
+      let stream: MediaStream | null = null
+
+      try {
+        // First try with back camera (environment)
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        })
+      } catch (envError) {
+        console.log("[v0] Back camera not available, trying front camera")
+        try {
+          // Fallback to front camera
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          })
+        } catch (userError) {
+          console.log("[v0] Front camera not available, trying any camera")
+          // Final fallback to any available camera
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          })
+        }
+      }
+
+      if (stream) {
+        setCameraStream(stream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+      }
+    } catch (error: any) {
+      console.error("[v0] Camera access error:", error)
+
+      let errorMessage = "Camera access failed. "
+
+      if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        errorMessage += "No camera device found. Please ensure a camera is connected and working."
+      } else if (error.name === "NotAllowedError") {
+        errorMessage += "Camera permission denied. Please allow camera access in your browser settings."
+      } else if (error.name === "NotReadableError") {
+        errorMessage += "Camera is already in use by another application. Please close other apps using the camera."
+      } else if (error.name === "OverconstrainedError") {
+        errorMessage += "Camera constraints not supported. Trying with basic settings..."
+        try {
+          const basicStream = await navigator.mediaDevices.getUserMedia({ video: true })
+          setCameraStream(basicStream)
+          if (videoRef.current) {
+            videoRef.current.srcObject = basicStream
+          }
+          return
+        } catch (basicError) {
+          errorMessage += " Failed with basic settings too."
+        }
+      } else {
+        errorMessage += error.message || "Unknown camera error occurred."
+      }
+
+      alert(errorMessage)
     }
   }
 
