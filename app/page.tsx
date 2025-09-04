@@ -4,9 +4,6 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 import { ArrowLeft, Camera, Calendar } from "lucide-react"
 
 export default function OnboardingFlow() {
@@ -97,58 +94,64 @@ export default function OnboardingFlow() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false)
-    }, 3000) // Show splash for 3 seconds
+    }, 3000)
 
     return () => clearTimeout(timer)
   }, [])
 
-  const DevControls = () => (
-    <div className="fixed top-4 right-4 z-50">
-      {!showDevControls ? (
-        <button
-          onClick={() => setShowDevControls(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
-        >
-          Dev
-        </button>
-      ) : (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl min-w-48">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-white font-medium text-sm">Navigation Test</h3>
-            <button onClick={() => setShowDevControls(false)} className="text-gray-400 hover:text-white text-lg">
-              ×
-            </button>
+  const DevControls = () => {
+    if (process.env.NODE_ENV === "production") {
+      return null
+    }
+
+    return (
+      <div className="fixed top-4 right-4 z-50">
+        {!showDevControls ? (
+          <button
+            onClick={() => setShowDevControls(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
+          >
+            Dev
+          </button>
+        ) : (
+          <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl min-w-48">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-white font-medium text-sm">Navigation Test</h3>
+              <button onClick={() => setShowDevControls(false)} className="text-gray-400 hover:text-white text-lg">
+                ×
+              </button>
+            </div>
+            <div className="space-y-2">
+              <button
+                onClick={resetToSplash}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
+              >
+                Splash Screen
+              </button>
+              <button
+                onClick={goToOnboarding}
+                className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm"
+              >
+                Onboarding Flow
+              </button>
+              <button
+                onClick={goToPaywall}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm"
+              >
+                Paywall
+              </button>
+              <button
+                onClick={goToDashboard}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+              >
+                Dashboard
+              </button>
+            </div>
           </div>
-          <div className="space-y-2">
-            <button
-              onClick={resetToSplash}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
-            >
-              Splash Screen
-            </button>
-            <button
-              onClick={goToOnboarding}
-              className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm"
-            >
-              Onboarding Flow
-            </button>
-            <button
-              onClick={goToPaywall}
-              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm"
-            >
-              Paywall
-            </button>
-            <button
-              onClick={goToDashboard}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
-            >
-              Dashboard
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+        )}
+      </div>
+    )
+  }
 
   if (showSplash) {
     return (
@@ -174,7 +177,6 @@ export default function OnboardingFlow() {
     return (
       <div className="min-h-screen bg-gray-900 text-white">
         <DevControls />
-        {/* Dashboard Content */}
         <div className="pb-20">
           {dashboardTab === "dashboard" && <DashboardScreen />}
           {dashboardTab === "scan" && <ScanScreen />}
@@ -183,7 +185,6 @@ export default function OnboardingFlow() {
           {dashboardTab === "settings" && <SettingsScreen />}
         </div>
 
-        {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700">
           <div className="flex justify-around py-2">
             {[
@@ -224,7 +225,6 @@ export default function OnboardingFlow() {
           </div>
         </div>
 
-        {/* Content */}
         <div className="space-y-6">
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-balance">Welcome to GutGuard</h1>
@@ -264,7 +264,6 @@ export default function OnboardingFlow() {
             </button>
           </div>
 
-          {/* Progress dots */}
           <div className="flex justify-center gap-2 py-4">
             {[1, 2, 3, 4, 5, 6, 7].map((dot) => (
               <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-white" : "bg-gray-600"}`} />
@@ -286,40 +285,28 @@ export default function OnboardingFlow() {
 }
 
 function DashboardScreen() {
-  const [activeScreen, setActiveScreen] = useState("dashboard")
-
   const handleQuickAction = (action: string) => {
     switch (action) {
       case "symptom-check":
-        setActiveScreen("log")
+        alert("Quick Symptom Check feature coming soon!")
         break
       case "stool-log":
-        setActiveScreen("log")
+        alert("Stool Log feature coming soon!")
         break
       case "food-scan":
-        setActiveScreen("scan")
+        alert("Food Scan feature coming soon!")
         break
       case "daily-goals":
-        // Show daily goals modal or navigate to goals section
         alert("Daily Goals feature coming soon!")
         break
     }
-  }
-
-  const handleRiskInfo = (type: string) => {
-    alert(`${type} risk assessment based on your recent symptoms, family history, and lifestyle factors.`)
   }
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">GutGuard</h1>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-gray-800"
-          onClick={() => setActiveScreen("settings")}
-        >
+        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
           <span className="text-lg">⚙️</span>
         </Button>
       </div>
@@ -332,20 +319,10 @@ function DashboardScreen() {
               <div>
                 <h3 className="text-gray-900 font-medium">Colon</h3>
                 <p className="text-gray-700 font-semibold">Low</p>
-                <button
-                  className="text-gray-600 text-xs underline hover:text-gray-800"
-                  onClick={() => handleRiskInfo("Colon")}
-                >
-                  Why?
-                </button>
+                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
               </div>
               <div className="w-16 h-16 bg-red-200 rounded-lg flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 32 32" className="text-red-600">
-                  <path
-                    fill="currentColor"
-                    d="M8 6c-2 0-4 2-4 4v12c0 2 2 4 4 4h16c2 0 4-2 4-4V10c0-2-2-4-4-4H8zm2 4h12c1 0 2 1 2 2v8c0 1-1 2-2 2H10c-1 0-2-1-2-2v-8c0-1 1-2 2-2z"
-                  />
-                </svg>
+                <span className="text-2xl">🫁</span>
               </div>
             </div>
 
@@ -353,20 +330,10 @@ function DashboardScreen() {
               <div>
                 <h3 className="text-gray-900 font-medium">Stomach</h3>
                 <p className="text-gray-700 font-semibold">Medium</p>
-                <button
-                  className="text-gray-600 text-xs underline hover:text-gray-800"
-                  onClick={() => handleRiskInfo("Stomach")}
-                >
-                  Why?
-                </button>
+                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
               </div>
               <div className="w-16 h-16 bg-teal-200 rounded-lg flex items-center justify-center">
-                <svg width="32" height="32" viewBox="0 0 32 32" className="text-teal-600">
-                  <path
-                    fill="currentColor"
-                    d="M16 4c-4 0-8 2-8 6v4c0 2-1 4-2 6-1 2 0 4 2 4h16c2 0 3-2 2-4-1-2-2-4-2-6v-4c0-4-4-6-8-6zm0 2c3 0 6 1 6 4v4c0 3 1 5 2 7H8c1-2 2-4 2-7v-4c0-3 3-4 6-4z"
-                  />
-                </svg>
+                <span className="text-2xl">🫃</span>
               </div>
             </div>
           </div>
@@ -376,60 +343,18 @@ function DashboardScreen() {
           <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              {
-                title: "Quick Symptom Check",
-                subtitle: "Start",
-                action: "symptom-check",
-                icon: (
-                  <svg width="24" height="24" viewBox="0 0 24 24" className="text-orange-600">
-                    <path
-                      fill="currentColor"
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                    />
-                  </svg>
-                ),
-                bg: "bg-orange-100",
-              },
+              { title: "Quick Symptom Check", subtitle: "Start", action: "symptom-check", bg: "bg-orange-100" },
               {
                 title: "Stool Log",
                 subtitle: "Bristol • pencil-thin toggle",
                 action: "stool-log",
-                icon: (
-                  <svg width="24" height="24" viewBox="0 0 24 24" className="text-yellow-600">
-                    <path
-                      fill="currentColor"
-                      d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
-                    />
-                  </svg>
-                ),
                 bg: "bg-yellow-100",
               },
-              {
-                title: "Food Scan",
-                subtitle: "Open Camera / Upload",
-                action: "food-scan",
-                icon: (
-                  <svg width="24" height="24" viewBox="0 0 24 24" className="text-blue-600">
-                    <path
-                      fill="currentColor"
-                      d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9z"
-                    />
-                  </svg>
-                ),
-                bg: "bg-blue-100",
-              },
+              { title: "Food Scan", subtitle: "Open Camera / Upload", action: "food-scan", bg: "bg-blue-100" },
               {
                 title: "Daily Goals",
                 subtitle: "Hydration ring, fiber goal, steps",
                 action: "daily-goals",
-                icon: (
-                  <svg width="24" height="24" viewBox="0 0 24 24" className="text-green-600">
-                    <path
-                      fill="currentColor"
-                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                    />
-                  </svg>
-                ),
                 bg: "bg-green-100",
               },
             ].map((action, index) => (
@@ -438,12 +363,9 @@ function DashboardScreen() {
                 className={`${action.bg} p-4 rounded-xl flex flex-col justify-between h-24 hover:opacity-80 transition-opacity`}
                 onClick={() => handleQuickAction(action.action)}
               >
-                <div className="flex items-start justify-between w-full">
-                  <div className="text-left">
-                    <h3 className="text-gray-900 font-medium text-sm">{action.title}</h3>
-                    <p className="text-gray-600 text-xs mt-1">{action.subtitle}</p>
-                  </div>
-                  {action.icon}
+                <div className="text-left">
+                  <h3 className="text-gray-900 font-medium text-sm">{action.title}</h3>
+                  <p className="text-gray-600 text-xs mt-1">{action.subtitle}</p>
                 </div>
               </button>
             ))}
@@ -483,7 +405,6 @@ function ScanScreen() {
       let stream: MediaStream | null = null
 
       try {
-        // First try with back camera (environment)
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "environment",
@@ -492,9 +413,7 @@ function ScanScreen() {
           },
         })
       } catch (envError) {
-        console.log("[v0] Back camera not available, trying front camera")
         try {
-          // Fallback to front camera
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: "user",
@@ -503,8 +422,6 @@ function ScanScreen() {
             },
           })
         } catch (userError) {
-          console.log("[v0] Front camera not available, trying any camera")
-          // Final fallback to any available camera
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               width: { ideal: 1280 },
@@ -521,30 +438,16 @@ function ScanScreen() {
         }
       }
     } catch (error: any) {
-      console.error("[v0] Camera access error:", error)
-
       let errorMessage = "Camera access failed. "
 
       if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-        errorMessage += "No camera device found. Please ensure a camera is connected and working."
+        errorMessage += "No camera device found."
       } else if (error.name === "NotAllowedError") {
-        errorMessage += "Camera permission denied. Please allow camera access in your browser settings."
+        errorMessage += "Camera permission denied."
       } else if (error.name === "NotReadableError") {
-        errorMessage += "Camera is already in use by another application. Please close other apps using the camera."
-      } else if (error.name === "OverconstrainedError") {
-        errorMessage += "Camera constraints not supported. Trying with basic settings..."
-        try {
-          const basicStream = await navigator.mediaDevices.getUserMedia({ video: true })
-          setCameraStream(basicStream)
-          if (videoRef.current) {
-            videoRef.current.srcObject = basicStream
-          }
-          return
-        } catch (basicError) {
-          errorMessage += " Failed with basic settings too."
-        }
+        errorMessage += "Camera is already in use."
       } else {
-        errorMessage += error.message || "Unknown camera error occurred."
+        errorMessage += error.message || "Unknown camera error."
       }
 
       alert(errorMessage)
@@ -571,16 +474,11 @@ function ScanScreen() {
 
   const analyzeFood = async (imageData: string) => {
     setIsScanning(true)
-
-    // Simulate AI analysis delay
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // Mock analysis results
     const mockResults = [
       { food: "Gluten-Free Bread", confidence: 95, suitable: true, reason: "Low FODMAP and gluten-free" },
       { food: "Spicy Curry", confidence: 88, suitable: false, reason: "High spice content may trigger symptoms" },
-      { food: "Banana", confidence: 92, suitable: true, reason: "Easy to digest and low FODMAP" },
-      { food: "Dairy Milk", confidence: 85, suitable: false, reason: "Lactose may cause digestive issues" },
     ]
 
     const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)]
@@ -722,36 +620,11 @@ function ScanScreen() {
                 <span className={`font-medium ${scanResult.suitable ? "text-green-400" : "text-red-400"}`}>
                   {scanResult.suitable ? "Great choice!" : "Caution advised"}
                 </span>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  className={scanResult.suitable ? "text-green-400" : "text-red-400"}
-                >
-                  <path
-                    fill="currentColor"
-                    d={
-                      scanResult.suitable
-                        ? "M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        : "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    }
-                  />
-                </svg>
+                <span className={scanResult.suitable ? "text-green-400" : "text-red-400"}>
+                  {scanResult.suitable ? "✓" : "⚠"}
+                </span>
               </div>
               <p className="text-sm text-gray-400 mt-2">{scanResult.reason}</p>
-            </div>
-
-            <div className="bg-gray-800 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Override</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                  <path
-                    fill="currentColor"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-400 mt-2">How we decide</p>
             </div>
           </div>
         </div>
@@ -761,421 +634,22 @@ function ScanScreen() {
 }
 
 function LogScreen() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [logData, setLogData] = useState({
-    bristolType: "",
-    stoolColor: "Brown",
-    hasBlood: false,
-    hasMucus: false,
-    hasUndigestedFood: false,
-    symptoms: [] as string[],
-    painLevel: [0],
-    notes: "",
-    waterIntake: [0],
-    sleepHours: [8],
-    stressLevel: [5],
-    moodRating: [5],
-    energyLevel: [5],
-  })
-
-  const [savedLogs, setSavedLogs] = useState<{ [key: string]: any }>({})
-
-  const bristolTypes = [
-    { type: 1, description: "Separate hard lumps" },
-    { type: 2, description: "Sausage-shaped but lumpy" },
-    { type: 3, description: "Like a sausage with cracks" },
-    { type: 4, description: "Smooth and soft" },
-    { type: 5, description: "Soft blobs" },
-    { type: 6, description: "Fluffy pieces" },
-    { type: 7, description: "Watery, no solid pieces" },
-  ]
-
-  const symptoms = [
-    "Abdominal Pain",
-    "Bloating",
-    "Gas",
-    "Nausea",
-    "Fatigue",
-    "Diarrhea",
-    "Constipation",
-    "Heartburn",
-    "Cramping",
-    "Headache",
-  ]
-
-  const handleSymptomToggle = (symptom: string) => {
-    const currentSymptoms = logData.symptoms
-    if (currentSymptoms.includes(symptom)) {
-      setLogData((prev) => ({
-        ...prev,
-        symptoms: currentSymptoms.filter((s) => s !== symptom),
-      }))
-    } else {
-      setLogData((prev) => ({
-        ...prev,
-        symptoms: [...currentSymptoms, symptom],
-      }))
-    }
-  }
-
-  const saveLog = () => {
-    setSavedLogs((prev) => ({
-      ...prev,
-      [selectedDate]: { ...logData, timestamp: new Date().toISOString() },
-    }))
-    alert("Daily log saved successfully!")
-  }
-
-  const loadLogForDate = (date: string) => {
-    const existingLog = savedLogs[date]
-    if (existingLog) {
-      setLogData(existingLog)
-    } else {
-      // Reset to default values for new date
-      setLogData({
-        bristolType: "",
-        stoolColor: "Brown",
-        hasBlood: false,
-        hasMucus: false,
-        hasUndigestedFood: false,
-        symptoms: [],
-        painLevel: [0],
-        notes: "",
-        waterIntake: [0],
-        sleepHours: [8],
-        stressLevel: [5],
-        moodRating: [5],
-        energyLevel: [5],
-      })
-    }
-  }
-
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date)
-    loadLogForDate(date)
-  }
-
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-lg font-medium">Daily Health Log</h1>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="bg-gray-800 border-gray-700 text-white rounded-lg px-3 py-1 text-sm"
-          />
-          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-            <Calendar className="h-5 w-5" />
-          </Button>
+      <div className="flex items-center gap-4 mb-8">
+        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-lg font-medium">Log</h1>
+        <div className="ml-auto">
+          <Calendar className="h-5 w-5 text-gray-400" />
         </div>
       </div>
 
-      <div className="space-y-8">
-        {/* Stool Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Stool</h2>
-          <div className="space-y-4">
-            {/* Bristol Stool Chart Selection */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <h3 className="text-sm text-gray-400 mb-3">Bristol Stool Chart</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {bristolTypes.map((bristol) => (
-                  <button
-                    key={bristol.type}
-                    onClick={() => setLogData((prev) => ({ ...prev, bristolType: bristol.type.toString() }))}
-                    className={`p-3 rounded-lg text-left transition-colors ${
-                      logData.bristolType === bristol.type.toString()
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                    }`}
-                  >
-                    <div className="font-medium">Type {bristol.type}</div>
-                    <div className="text-xs opacity-80">{bristol.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stool Color */}
-            <div className="bg-gray-800 rounded-xl p-4">
-              <h3 className="text-sm text-gray-400 mb-3">Color</h3>
-              <div className="flex gap-2">
-                {["Brown", "Yellow", "Green", "Black", "Red", "White"].map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setLogData((prev) => ({ ...prev, stoolColor: color }))}
-                    className={`px-3 py-2 rounded-lg text-sm ${
-                      logData.stoolColor === color
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stool Characteristics */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Blood</span>
-                <Switch
-                  checked={logData.hasBlood}
-                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasBlood: checked }))}
-                  className="data-[state=checked]:bg-red-500"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Mucus</span>
-                <Switch
-                  checked={logData.hasMucus}
-                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasMucus: checked }))}
-                  className="data-[state=checked]:bg-red-500"
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Undigested Food</span>
-                <Switch
-                  checked={logData.hasUndigestedFood}
-                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasUndigestedFood: checked }))}
-                  className="data-[state=checked]:bg-red-500"
-                />
-              </div>
-            </div>
-
-            <Button variant="outline" className="w-full bg-gray-800 border-gray-600 text-white hover:bg-gray-700">
-              <Camera className="h-4 w-4 mr-2" />
-              Photo
-            </Button>
-          </div>
-        </div>
-
-        {/* Symptoms Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Symptoms</h2>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {symptoms.map((symptom) => (
-              <button
-                key={symptom}
-                onClick={() => handleSymptomToggle(symptom)}
-                className={`px-3 py-2 rounded-full text-sm transition-colors ${
-                  logData.symptoms.includes(symptom)
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-800 border border-gray-600 text-white hover:bg-gray-700"
-                }`}
-              >
-                {symptom}
-              </button>
-            ))}
-          </div>
-
-          {/* Pain Level */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="text-sm text-gray-400">Pain Level (0-10)</label>
-              <span className="text-lg font-medium">{logData.painLevel[0]}</span>
-            </div>
-            <Slider
-              value={logData.painLevel}
-              onValueChange={(value) => setLogData((prev) => ({ ...prev, painLevel: value }))}
-              max={10}
-              min={0}
-              step={1}
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        {/* Daily Wellness Tracking */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Daily Wellness</h2>
-          <div className="space-y-6">
-            {/* Water Intake */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Water Intake (glasses)</label>
-                <span className="text-lg font-medium">{logData.waterIntake[0]}</span>
-              </div>
-              <Slider
-                value={logData.waterIntake}
-                onValueChange={(value) => setLogData((prev) => ({ ...prev, waterIntake: value }))}
-                max={12}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-
-            {/* Sleep Hours */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Sleep Hours</label>
-                <span className="text-lg font-medium">{logData.sleepHours[0]}h</span>
-              </div>
-              <Slider
-                value={logData.sleepHours}
-                onValueChange={(value) => setLogData((prev) => ({ ...prev, sleepHours: value }))}
-                max={12}
-                min={0}
-                step={0.5}
-                className="w-full"
-              />
-            </div>
-
-            {/* Stress Level */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Stress Level (0-10)</label>
-                <span className="text-lg font-medium">{logData.stressLevel[0]}</span>
-              </div>
-              <Slider
-                value={logData.stressLevel}
-                onValueChange={(value) => setLogData((prev) => ({ ...prev, stressLevel: value }))}
-                max={10}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-
-            {/* Mood Rating */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Mood (1-10)</label>
-                <span className="text-lg font-medium">{logData.moodRating[0]}</span>
-              </div>
-              <Slider
-                value={logData.moodRating}
-                onValueChange={(value) => setLogData((prev) => ({ ...prev, moodRating: value }))}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-            </div>
-
-            {/* Energy Level */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Energy Level (1-10)</label>
-                <span className="text-lg font-medium">{logData.energyLevel[0]}</span>
-              </div>
-              <Slider
-                value={logData.energyLevel}
-                onValueChange={(value) => setLogData((prev) => ({ ...prev, energyLevel: value }))}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Notes</h2>
-          <Textarea
-            placeholder="How are you feeling today? Any observations or concerns..."
-            value={logData.notes}
-            onChange={(e) => setLogData((prev) => ({ ...prev, notes: e.target.value }))}
-            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl min-h-[100px] resize-none"
-          />
-        </div>
-
-        {/* Save Button */}
-        <Button
-          onClick={saveLog}
-          className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-medium"
-        >
-          Save Daily Log
-        </Button>
-
-        {/* Trends Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Trends</h2>
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Stool Consistency</span>
-                <span className="font-bold text-2xl">{logData.bristolType || "3"}</span>
-              </div>
-              <p className="text-xs text-gray-500 mb-3">14 days</p>
-              <div className="flex items-end gap-1 h-16">
-                {[3, 2, 4, 3, 3, 2, 4, 3, 3, 4, 2, 3, 4, 3].map((value, index) => (
-                  <div
-                    key={index}
-                    className="bg-green-500 rounded-t flex-1"
-                    style={{ height: `${(value / 7) * 100}%` }}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>M</span>
-                <span>T</span>
-                <span>W</span>
-                <span>T</span>
-                <span>F</span>
-                <span>S</span>
-                <span>S</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Symptom Severity</span>
-                <span className="font-bold text-2xl">{logData.painLevel[0]}</span>
-              </div>
-              <p className="text-xs text-gray-500 mb-3">14 days</p>
-              <div className="flex items-end gap-1 h-16">
-                {[2, 1, 3, 2, 2, 1, 3, 2, 2, 3, 1, 2, 3, 2].map((value, index) => (
-                  <div
-                    key={index}
-                    className="bg-green-500 rounded-t flex-1"
-                    style={{ height: `${(value / 5) * 100}%` }}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>M</span>
-                <span>T</span>
-                <span>W</span>
-                <span>T</span>
-                <span>F</span>
-                <span>S</span>
-                <span>S</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Mood & Energy</span>
-                <span className="font-bold text-2xl">{logData.moodRating[0]}</span>
-              </div>
-              <p className="text-xs text-gray-500 mb-3">14 days</p>
-              <div className="flex items-end gap-1 h-16">
-                {[7, 6, 8, 7, 7, 6, 8, 7, 7, 8, 6, 7, 8, 7].map((value, index) => (
-                  <div
-                    key={index}
-                    className="bg-blue-500 rounded-t flex-1"
-                    style={{ height: `${(value / 10) * 100}%` }}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>M</span>
-                <span>T</span>
-                <span>W</span>
-                <span>T</span>
-                <span>F</span>
-                <span>S</span>
-                <span>S</span>
-              </div>
-            </div>
-          </div>
+      <div className="space-y-6">
+        <div className="bg-gray-800 rounded-xl p-4">
+          <h2 className="text-lg font-semibold mb-4">Daily Health Log</h2>
+          <p className="text-gray-400">Track your symptoms, stool patterns, and wellness metrics here.</p>
         </div>
       </div>
     </div>
@@ -1204,10 +678,7 @@ function AdviceScreen() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          context: "gut health advice",
-        }),
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
       })
 
       const data = await response.json()
@@ -1215,10 +686,7 @@ function AdviceScreen() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-        },
+        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again later." },
       ])
     } finally {
       setIsLoading(false)
@@ -1226,307 +694,53 @@ function AdviceScreen() {
   }
 
   return (
-    <div className="p-6 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">AI Coach</h1>
+    <div className="p-6 h-screen flex flex-col">
+      <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-          <span className="text-lg">⚙️</span>
+          <ArrowLeft className="h-5 w-5" />
         </Button>
+        <h1 className="text-lg font-medium">AI Coach</h1>
       </div>
 
-      <div className="flex-1 bg-gray-800 rounded-xl p-4 mb-4 overflow-y-auto max-h-96">
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div key={index} className={`flex items-start gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  message.role === "assistant" ? "bg-green-500" : "bg-blue-500"
-                }`}
-              >
-                <span className="text-white font-bold text-sm">{message.role === "assistant" ? "AI" : "You"}</span>
-              </div>
-              <div className={`flex-1 p-3 rounded-lg ${message.role === "assistant" ? "bg-gray-700" : "bg-blue-600"}`}>
-                <p className="text-sm leading-relaxed">{message.content}</p>
-              </div>
+      <div className="flex-1 space-y-4 overflow-y-auto mb-4">
+        {messages.map((message, index) => (
+          <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                message.role === "user" ? "bg-green-500 text-white" : "bg-gray-800 text-white"
+              }`}
+            >
+              {message.content}
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AI</span>
-              </div>
-              <div className="flex-1 p-3 rounded-lg bg-gray-700">
-                <p className="text-sm">Thinking...</p>
-              </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg">
+              <div className="animate-pulse">Thinking...</div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2">
         <input
           type="text"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && sendMessage()}
           placeholder="Ask about your gut health..."
-          className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+          className="flex-1 bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
         />
-        <Button
-          onClick={sendMessage}
-          disabled={!inputMessage.trim() || isLoading}
-          className="bg-green-500 hover:bg-green-600 text-white px-6"
-        >
+        <Button onClick={sendMessage} disabled={isLoading} className="bg-green-500 hover:bg-green-600">
           Send
         </Button>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          {
-            title: "Flare plan (24-48 h)",
-            bg: "bg-red-100",
-            message: "I'm experiencing a gut health flare-up. Can you provide a 24-48 hour management plan?",
-          },
-          {
-            title: "Gentle 7-day plan",
-            bg: "bg-blue-100",
-            message: "Can you create a gentle 7-day gut health recovery plan for me?",
-          },
-          {
-            title: "Trigger hunt",
-            bg: "bg-yellow-100",
-            message: "Help me identify potential triggers for my digestive issues.",
-          },
-          {
-            title: "Doctor checklist",
-            bg: "bg-green-100",
-            message: "What should I discuss with my doctor about my gut health?",
-          },
-        ].map((action, index) => (
-          <Button
-            key={index}
-            variant="outline"
-            onClick={() => {
-              setInputMessage(action.message)
-              setTimeout(() => sendMessage(), 100)
-            }}
-            className={`${action.bg} border-gray-600 text-gray-900 hover:bg-opacity-80 h-16 rounded-xl`}
-          >
-            {action.title}
-          </Button>
-        ))}
       </div>
     </div>
   )
 }
 
 function SettingsScreen() {
-  const [currentView, setCurrentView] = useState("main")
-  const [theme, setTheme] = useState("Dark")
-  const [language, setLanguage] = useState("English")
-  const [notifications, setNotifications] = useState({
-    hydration: true,
-    dailyCheck: true,
-    stoolLog: true,
-    symptoms: false,
-  })
-
-  const handleProfileEdit = () => {
-    alert("Profile editing feature - redirects to onboarding form with current data pre-filled")
-  }
-
-  const handleLanguageChange = () => {
-    const languages = ["English", "Spanish", "French", "German", "Italian"]
-    const currentIndex = languages.indexOf(language)
-    const nextIndex = (currentIndex + 1) % languages.length
-    setLanguage(languages[nextIndex])
-  }
-
-  const handleNotificationSettings = () => {
-    setCurrentView("notifications")
-  }
-
-  const handleDataExport = () => {
-    const exportData = {
-      profile: { age: 30, gender: "Male", height: 175, weight: 70 },
-      healthLogs: { symptoms: [], stoolLogs: [], painLevels: [] },
-      exportDate: new Date().toISOString(),
-    }
-
-    const dataStr = JSON.stringify(exportData, null, 2)
-    const dataBlob = new Blob([dataStr], { type: "application/json" })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = "gutguard-data-export.json"
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const handleThemeToggle = () => {
-    setTheme(theme === "Dark" ? "Light" : "Dark")
-  }
-
-  const handleDisclaimer = () => {
-    setCurrentView("disclaimer")
-  }
-
-  const handlePrivacyPolicy = () => {
-    setCurrentView("privacy")
-  }
-
-  const handleResetOnboarding = () => {
-    if (confirm("Are you sure you want to reset your onboarding? This will clear all your progress.")) {
-      localStorage.clear()
-      window.location.reload()
-    }
-  }
-
-  const handleManageSubscription = () => {
-    window.open("https://buy.stripe.com/manage/subscription", "_blank")
-  }
-
-  if (currentView === "notifications") {
-    return (
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-800"
-            onClick={() => setCurrentView("main")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-medium">Notification Settings</h1>
-        </div>
-
-        <div className="space-y-6">
-          {Object.entries(notifications).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1")}</h3>
-                <p className="text-sm text-gray-400">
-                  {key === "hydration" && "Daily water intake reminders"}
-                  {key === "dailyCheck" && "Daily health check-in notifications"}
-                  {key === "stoolLog" && "Stool logging reminders"}
-                  {key === "symptoms" && "Symptom tracking alerts"}
-                </p>
-              </div>
-              <Switch
-                checked={value}
-                onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, [key]: checked }))}
-                className="data-[state=checked]:bg-green-500"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (currentView === "disclaimer") {
-    return (
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-800"
-            onClick={() => setCurrentView("main")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-medium">Full Disclaimer</h1>
-        </div>
-
-        <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
-          <p>
-            <strong>Medical Disclaimer:</strong> GutGuard is an educational tool and is not intended to provide medical
-            advice, diagnosis, or treatment. Always consult with qualified healthcare professionals regarding any health
-            concerns.
-          </p>
-
-          <p>
-            <strong>Not a Medical Device:</strong> This application is not a medical device and should not be used as a
-            substitute for professional medical care, diagnosis, or treatment.
-          </p>
-
-          <p>
-            <strong>Emergency Situations:</strong> If you experience severe symptoms or medical emergencies, seek
-            immediate medical attention. Do not rely on this app for emergency medical situations.
-          </p>
-
-          <p>
-            <strong>Data Accuracy:</strong> While we strive for accuracy, the information provided may not be complete
-            or up-to-date. Users are responsible for verifying information with healthcare providers.
-          </p>
-
-          <p>
-            <strong>Individual Results:</strong> Health recommendations are general in nature and may not be suitable
-            for everyone. Individual results may vary.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentView === "privacy") {
-    return (
-      <div className="p-6">
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-800"
-            onClick={() => setCurrentView("main")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-medium">Privacy Policy</h1>
-        </div>
-
-        <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
-          <p>
-            <strong>Data Collection:</strong> We collect health information you provide to personalize your experience
-            and provide relevant insights.
-          </p>
-
-          <p>
-            <strong>Data Usage:</strong> Your data is used to provide personalized health insights, track your progress,
-            and improve our services.
-          </p>
-
-          <p>
-            <strong>Data Security:</strong> We implement industry-standard security measures to protect your personal
-            health information.
-          </p>
-
-          <p>
-            <strong>Data Sharing:</strong> We do not sell or share your personal health data with third parties without
-            your explicit consent.
-          </p>
-
-          <p>
-            <strong>Data Retention:</strong> Your data is retained as long as your account is active or as needed to
-            provide services.
-          </p>
-
-          <p>
-            <strong>Your Rights:</strong> You have the right to access, update, or delete your personal information at
-            any time.
-          </p>
-
-          <p>
-            <strong>Contact:</strong> For privacy concerns, contact us at privacy@gutguard.com
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-8">
@@ -1536,156 +750,27 @@ function SettingsScreen() {
         <h1 className="text-lg font-medium">Settings</h1>
       </div>
 
-      <div className="space-y-8">
-        {/* Profile Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Profile</h2>
-          <button
-            onClick={handleProfileEdit}
-            className="w-full bg-gray-800 rounded-xl p-4 flex items-center gap-4 hover:bg-gray-700 transition-colors"
-          >
-            <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" className="text-white">
-                <path
-                  fill="currentColor"
-                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1 text-left">
-              <h3 className="font-medium">Profile & Health</h3>
-              <p className="text-sm text-gray-400">Edit your profile and health information</p>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-              <path
-                fill="currentColor"
-                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-              />
-            </svg>
-          </button>
+      <div className="space-y-6">
+        <div className="bg-gray-800 rounded-xl p-4">
+          <h2 className="text-lg font-semibold mb-4">Profile & Health</h2>
+          <p className="text-gray-400">Edit your profile and health information</p>
         </div>
 
-        {/* Preferences Section */}
-        <div>
+        <div className="bg-gray-800 rounded-xl p-4">
           <h2 className="text-lg font-semibold mb-4">Preferences</h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleLanguageChange}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <div>
-                <h3 className="font-medium text-left">Language</h3>
-                <p className="text-sm text-gray-400 text-left">{language}</p>
-              </div>
-              <span className="text-gray-400">{language.slice(0, 2).toUpperCase()}</span>
-            </button>
-
-            <button
-              onClick={handleNotificationSettings}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <div>
-                <h3 className="font-medium text-left">Notifications</h3>
-                <p className="text-sm text-gray-400 text-left">Hydration, Daily Check, Stool Log</p>
-              </div>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
-
-            <button
-              onClick={handleDataExport}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <div>
-                <h3 className="font-medium text-left">Data Export</h3>
-                <p className="text-sm text-gray-400 text-left">Export your data in JSON or PDF format</p>
-              </div>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
-
-            <button
-              onClick={handleThemeToggle}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <div>
-                <h3 className="font-medium text-left">Theme</h3>
-                <p className="text-sm text-gray-400 text-left">{theme}</p>
-              </div>
-              <span className="text-gray-400">{theme}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Legal Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Legal</h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleDisclaimer}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <span className="font-medium">Full Disclaimer</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
-
-            <button
-              onClick={handlePrivacyPolicy}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <span className="font-medium">Privacy Policy</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Other Section */}
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Other</h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleResetOnboarding}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <span className="font-medium">Reset Onboarding</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
-
-            <button
-              onClick={handleManageSubscription}
-              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
-            >
-              <span className="font-medium">Manage Subscription</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                />
-              </svg>
-            </button>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span>Language</span>
+              <span className="text-gray-400">EN</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Notifications</span>
+              <span className="text-gray-400">Enabled</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span>Theme</span>
+              <span className="text-gray-400">Dark</span>
+            </div>
           </div>
         </div>
       </div>
