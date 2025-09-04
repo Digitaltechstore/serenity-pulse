@@ -4,15 +4,14 @@ export async function POST(request: NextRequest) {
   try {
     const { messages, context } = await request.json()
 
-    // Using Groq integration for AI responses
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        Authorization: `Bearer sk-76b1816603664b6896007fde8a98491c`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama3-8b-8192",
+        model: "deepseek-chat",
         messages: [
           {
             role: "system",
