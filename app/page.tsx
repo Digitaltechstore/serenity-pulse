@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -1365,11 +1367,40 @@ export default function OnboardingFlow() {
 }
 
 function DashboardScreen() {
+  const [activeScreen, setActiveScreen] = useState("dashboard")
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case "symptom-check":
+        setActiveScreen("log")
+        break
+      case "stool-log":
+        setActiveScreen("log")
+        break
+      case "food-scan":
+        setActiveScreen("scan")
+        break
+      case "daily-goals":
+        // Show daily goals modal or navigate to goals section
+        alert("Daily Goals feature coming soon!")
+        break
+    }
+  }
+
+  const handleRiskInfo = (type: string) => {
+    alert(`${type} risk assessment based on your recent symptoms, family history, and lifestyle factors.`)
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">GutGuard</h1>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-white hover:bg-gray-800"
+          onClick={() => setActiveScreen("settings")}
+        >
           <span className="text-lg">⚙️</span>
         </Button>
       </div>
@@ -1382,7 +1413,12 @@ function DashboardScreen() {
               <div>
                 <h3 className="text-gray-900 font-medium">Colon</h3>
                 <p className="text-gray-700 font-semibold">Low</p>
-                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
+                <button
+                  className="text-gray-600 text-xs underline hover:text-gray-800"
+                  onClick={() => handleRiskInfo("Colon")}
+                >
+                  Why?
+                </button>
               </div>
               <div className="w-16 h-16 bg-red-200 rounded-lg flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 32 32" className="text-red-600">
@@ -1398,7 +1434,12 @@ function DashboardScreen() {
               <div>
                 <h3 className="text-gray-900 font-medium">Stomach</h3>
                 <p className="text-gray-700 font-semibold">Medium</p>
-                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
+                <button
+                  className="text-gray-600 text-xs underline hover:text-gray-800"
+                  onClick={() => handleRiskInfo("Stomach")}
+                >
+                  Why?
+                </button>
               </div>
               <div className="w-16 h-16 bg-teal-200 rounded-lg flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 32 32" className="text-teal-600">
@@ -1419,6 +1460,7 @@ function DashboardScreen() {
               {
                 title: "Quick Symptom Check",
                 subtitle: "Start",
+                action: "symptom-check",
                 icon: (
                   <svg width="24" height="24" viewBox="0 0 24 24" className="text-orange-600">
                     <path
@@ -1432,6 +1474,7 @@ function DashboardScreen() {
               {
                 title: "Stool Log",
                 subtitle: "Bristol • pencil-thin toggle",
+                action: "stool-log",
                 icon: (
                   <svg width="24" height="24" viewBox="0 0 24 24" className="text-yellow-600">
                     <path
@@ -1445,6 +1488,7 @@ function DashboardScreen() {
               {
                 title: "Food Scan",
                 subtitle: "Open Camera / Upload",
+                action: "food-scan",
                 icon: (
                   <svg width="24" height="24" viewBox="0 0 24 24" className="text-blue-600">
                     <path
@@ -1458,6 +1502,7 @@ function DashboardScreen() {
               {
                 title: "Daily Goals",
                 subtitle: "Hydration ring, fiber goal, steps",
+                action: "daily-goals",
                 icon: (
                   <svg width="24" height="24" viewBox="0 0 24 24" className="text-green-600">
                     <path
@@ -1469,15 +1514,19 @@ function DashboardScreen() {
                 bg: "bg-green-100",
               },
             ].map((action, index) => (
-              <div key={index} className={`${action.bg} p-4 rounded-xl flex flex-col justify-between h-24`}>
-                <div className="flex items-start justify-between">
-                  <div>
+              <button
+                key={index}
+                className={`${action.bg} p-4 rounded-xl flex flex-col justify-between h-24 hover:opacity-80 transition-opacity`}
+                onClick={() => handleQuickAction(action.action)}
+              >
+                <div className="flex items-start justify-between w-full">
+                  <div className="text-left">
                     <h3 className="text-gray-900 font-medium text-sm">{action.title}</h3>
                     <p className="text-gray-600 text-xs mt-1">{action.subtitle}</p>
                   </div>
                   {action.icon}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -1487,6 +1536,96 @@ function DashboardScreen() {
 }
 
 function ScanScreen() {
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<{
+    food: string
+    confidence: number
+    suitable: boolean
+    reason: string
+  } | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }, // Use back camera on mobile
+      })
+      setCameraStream(stream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (error) {
+      console.error("Camera access denied:", error)
+      alert("Camera access is required to scan food. Please enable camera permissions.")
+    }
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current
+      const video = videoRef.current
+      const context = canvas.getContext("2d")
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
+      if (context) {
+        context.drawImage(video, 0, 0)
+        const imageData = canvas.toDataURL("image/jpeg")
+        setCapturedImage(imageData)
+        analyzeFood(imageData)
+      }
+    }
+  }
+
+  const analyzeFood = async (imageData: string) => {
+    setIsScanning(true)
+
+    // Simulate AI analysis delay
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    // Mock analysis results
+    const mockResults = [
+      { food: "Gluten-Free Bread", confidence: 95, suitable: true, reason: "Low FODMAP and gluten-free" },
+      { food: "Spicy Curry", confidence: 88, suitable: false, reason: "High spice content may trigger symptoms" },
+      { food: "Banana", confidence: 92, suitable: true, reason: "Easy to digest and low FODMAP" },
+      { food: "Dairy Milk", confidence: 85, suitable: false, reason: "Lactose may cause digestive issues" },
+    ]
+
+    const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)]
+    setScanResult(randomResult)
+    setIsScanning(false)
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const imageData = e.target?.result as string
+        setCapturedImage(imageData)
+        analyzeFood(imageData)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop())
+      setCameraStream(null)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      stopCamera()
+    }
+  }, [cameraStream])
+
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-8">
@@ -1496,81 +1635,253 @@ function ScanScreen() {
         <h1 className="text-lg font-medium">Scan</h1>
       </div>
 
-      {/* Camera Interface */}
-      <div className="flex justify-center gap-6 mb-12">
-        <Button variant="ghost" size="lg" className="w-16 h-16 rounded-full bg-gray-800 hover:bg-gray-700">
-          <svg width="24" height="24" viewBox="0 0 24 24" className="text-white">
-            <path
-              fill="currentColor"
-              d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+      <div className="mb-8">
+        {!cameraStream && !capturedImage && (
+          <div className="bg-gray-800 rounded-xl p-8 text-center">
+            <Camera className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-400 mb-4">Point your camera at food to analyze</p>
+            <div className="space-y-3">
+              <Button onClick={startCamera} className="w-full bg-green-500 hover:bg-green-600 text-white">
+                Open Camera
+              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <Button variant="outline" className="w-full bg-gray-700 border-gray-600 text-white hover:bg-gray-600">
+                  Upload Photo
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {cameraStream && !capturedImage && (
+          <div className="relative">
+            <video ref={videoRef} autoPlay playsInline className="w-full h-64 bg-black rounded-xl object-cover" />
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+              <div className="flex gap-4">
+                <Button
+                  onClick={stopCamera}
+                  variant="ghost"
+                  size="lg"
+                  className="w-12 h-12 rounded-full bg-gray-800 hover:bg-gray-700"
+                >
+                  ✕
+                </Button>
+                <Button onClick={capturePhoto} size="lg" className="w-16 h-16 rounded-full bg-white hover:bg-gray-100">
+                  <Camera className="h-8 w-8 text-black" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {capturedImage && (
+          <div className="relative">
+            <img
+              src={capturedImage || "/placeholder.svg"}
+              alt="Captured food"
+              className="w-full h-64 bg-black rounded-xl object-cover"
             />
-          </svg>
-        </Button>
-        <Button variant="ghost" size="lg" className="w-20 h-20 rounded-full bg-white hover:bg-gray-100">
-          <Camera className="h-8 w-8 text-black" />
-        </Button>
-        <Button variant="ghost" size="lg" className="w-16 h-16 rounded-full bg-gray-800 hover:bg-gray-700">
-          <svg width="24" height="24" viewBox="0 0 24 24" className="text-white">
-            <circle cx="12" cy="12" r="10" fill="currentColor" />
-          </svg>
-        </Button>
+            <Button
+              onClick={() => {
+                setCapturedImage(null)
+                setScanResult(null)
+                startCamera()
+              }}
+              className="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white"
+              size="sm"
+            >
+              Retake
+            </Button>
+          </div>
+        )}
+
+        <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Food Result */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Food Result</h2>
-          <div className="bg-gray-800 rounded-xl p-4 flex items-center gap-4">
-            <div className="w-12 h-12 bg-orange-200 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🍞</span>
+      {isScanning && (
+        <div className="bg-gray-800 rounded-xl p-6 text-center mb-6">
+          <div className="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-400">Analyzing food...</p>
+        </div>
+      )}
+
+      {scanResult && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Food Result</h2>
+            <div className="bg-gray-800 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-200 rounded-lg flex items-center justify-center">
+                <span className="text-2xl">🍽️</span>
+              </div>
+              <div>
+                <h3 className="font-medium">{scanResult.food}</h3>
+                <p className="text-sm text-gray-400">Confidence: {scanResult.confidence}%</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium">Gluten-Free Bread</h3>
-              <p className="text-sm text-gray-400">Confidence: 95%</p>
+          </div>
+
+          <div className="space-y-4">
+            <div
+              className={`bg-gray-800 rounded-xl p-4 ${scanResult.suitable ? "border-l-4 border-green-500" : "border-l-4 border-red-500"}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`font-medium ${scanResult.suitable ? "text-green-400" : "text-red-400"}`}>
+                  {scanResult.suitable ? "Great choice!" : "Caution advised"}
+                </span>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  className={scanResult.suitable ? "text-green-400" : "text-red-400"}
+                >
+                  <path
+                    fill="currentColor"
+                    d={
+                      scanResult.suitable
+                        ? "M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        : "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    }
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">{scanResult.reason}</p>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Override</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
+                  <path
+                    fill="currentColor"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-400 mt-2">How we decide</p>
             </div>
           </div>
         </div>
-
-        <div className="space-y-4">
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-green-400">Great now</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-green-400">
-                <path
-                  fill="currentColor"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-400 mt-2">This food is suitable for your current symptoms. Enjoy!</p>
-          </div>
-
-          <div className="bg-gray-800 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Override</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
-                <path
-                  fill="currentColor"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-400 mt-2">How we decide</p>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
 
 function LogScreen() {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [logData, setLogData] = useState({
+    bristolType: "",
+    stoolColor: "Brown",
+    hasBlood: false,
+    hasMucus: false,
+    hasUndigestedFood: false,
+    symptoms: [] as string[],
+    painLevel: [0],
+    notes: "",
+    waterIntake: [0],
+    sleepHours: [8],
+    stressLevel: [5],
+    moodRating: [5],
+    energyLevel: [5],
+  })
+
+  const [savedLogs, setSavedLogs] = useState<{ [key: string]: any }>({})
+
+  const bristolTypes = [
+    { type: 1, description: "Separate hard lumps" },
+    { type: 2, description: "Sausage-shaped but lumpy" },
+    { type: 3, description: "Like a sausage with cracks" },
+    { type: 4, description: "Smooth and soft" },
+    { type: 5, description: "Soft blobs" },
+    { type: 6, description: "Fluffy pieces" },
+    { type: 7, description: "Watery, no solid pieces" },
+  ]
+
+  const symptoms = [
+    "Abdominal Pain",
+    "Bloating",
+    "Gas",
+    "Nausea",
+    "Fatigue",
+    "Diarrhea",
+    "Constipation",
+    "Heartburn",
+    "Cramping",
+    "Headache",
+  ]
+
+  const handleSymptomToggle = (symptom: string) => {
+    const currentSymptoms = logData.symptoms
+    if (currentSymptoms.includes(symptom)) {
+      setLogData((prev) => ({
+        ...prev,
+        symptoms: currentSymptoms.filter((s) => s !== symptom),
+      }))
+    } else {
+      setLogData((prev) => ({
+        ...prev,
+        symptoms: [...currentSymptoms, symptom],
+      }))
+    }
+  }
+
+  const saveLog = () => {
+    setSavedLogs((prev) => ({
+      ...prev,
+      [selectedDate]: { ...logData, timestamp: new Date().toISOString() },
+    }))
+    alert("Daily log saved successfully!")
+  }
+
+  const loadLogForDate = (date: string) => {
+    const existingLog = savedLogs[date]
+    if (existingLog) {
+      setLogData(existingLog)
+    } else {
+      // Reset to default values for new date
+      setLogData({
+        bristolType: "",
+        stoolColor: "Brown",
+        hasBlood: false,
+        hasMucus: false,
+        hasUndigestedFood: false,
+        symptoms: [],
+        painLevel: [0],
+        notes: "",
+        waterIntake: [0],
+        sleepHours: [8],
+        stressLevel: [5],
+        moodRating: [5],
+        energyLevel: [5],
+      })
+    }
+  }
+
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date)
+    loadLogForDate(date)
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-lg font-medium">Log</h1>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-          <Calendar className="h-5 w-5" />
-        </Button>
+        <h1 className="text-lg font-medium">Daily Health Log</h1>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => handleDateChange(e.target.value)}
+            className="bg-gray-800 border-gray-700 text-white rounded-lg px-3 py-1 text-sm"
+          />
+          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+            <Calendar className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-8">
@@ -1578,32 +1889,72 @@ function LogScreen() {
         <div>
           <h2 className="text-lg font-semibold mb-4">Stool</h2>
           <div className="space-y-4">
+            {/* Bristol Stool Chart Selection */}
             <div className="bg-gray-800 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Bristol Stool Chart</span>
-                <span className="font-medium">Type 3</span>
+              <h3 className="text-sm text-gray-400 mb-3">Bristol Stool Chart</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {bristolTypes.map((bristol) => (
+                  <button
+                    key={bristol.type}
+                    onClick={() => setLogData((prev) => ({ ...prev, bristolType: bristol.type.toString() }))}
+                    className={`p-3 rounded-lg text-left transition-colors ${
+                      logData.bristolType === bristol.type.toString()
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium">Type {bristol.type}</div>
+                    <div className="text-xs opacity-80">{bristol.description}</div>
+                  </button>
+                ))}
               </div>
             </div>
 
+            {/* Stool Color */}
             <div className="bg-gray-800 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Color</span>
-                <span className="font-medium">Brown</span>
+              <h3 className="text-sm text-gray-400 mb-3">Color</h3>
+              <div className="flex gap-2">
+                {["Brown", "Yellow", "Green", "Black", "Red", "White"].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setLogData((prev) => ({ ...prev, stoolColor: color }))}
+                    className={`px-3 py-2 rounded-lg text-sm ${
+                      logData.stoolColor === color
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
               </div>
             </div>
 
+            {/* Stool Characteristics */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Blood</span>
-                <Switch className="data-[state=checked]:bg-red-500" />
+                <Switch
+                  checked={logData.hasBlood}
+                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasBlood: checked }))}
+                  className="data-[state=checked]:bg-red-500"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Mucus</span>
-                <Switch className="data-[state=checked]:bg-red-500" />
+                <Switch
+                  checked={logData.hasMucus}
+                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasMucus: checked }))}
+                  className="data-[state=checked]:bg-red-500"
+                />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Undigested Food</span>
-                <Switch className="data-[state=checked]:bg-red-500" />
+                <Switch
+                  checked={logData.hasUndigestedFood}
+                  onCheckedChange={(checked) => setLogData((prev) => ({ ...prev, hasUndigestedFood: checked }))}
+                  className="data-[state=checked]:bg-red-500"
+                />
               </div>
             </div>
 
@@ -1611,30 +1962,149 @@ function LogScreen() {
               <Camera className="h-4 w-4 mr-2" />
               Photo
             </Button>
-
-            <Textarea
-              placeholder="Notes"
-              className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl min-h-[80px] resize-none"
-            />
           </div>
         </div>
 
         {/* Symptoms Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Symptoms</h2>
-          <div className="flex flex-wrap gap-2">
-            {["Abdominal Pain", "Bloating", "Gas", "Nausea", "Fatigue"].map((symptom) => (
-              <Button
+          <div className="flex flex-wrap gap-2 mb-4">
+            {symptoms.map((symptom) => (
+              <button
                 key={symptom}
-                variant="outline"
-                size="sm"
-                className="rounded-full bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+                onClick={() => handleSymptomToggle(symptom)}
+                className={`px-3 py-2 rounded-full text-sm transition-colors ${
+                  logData.symptoms.includes(symptom)
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-800 border border-gray-600 text-white hover:bg-gray-700"
+                }`}
               >
                 {symptom}
-              </Button>
+              </button>
             ))}
           </div>
+
+          {/* Pain Level */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-sm text-gray-400">Pain Level (0-10)</label>
+              <span className="text-lg font-medium">{logData.painLevel[0]}</span>
+            </div>
+            <Slider
+              value={logData.painLevel}
+              onValueChange={(value) => setLogData((prev) => ({ ...prev, painLevel: value }))}
+              max={10}
+              min={0}
+              step={1}
+              className="w-full"
+            />
+          </div>
         </div>
+
+        {/* Daily Wellness Tracking */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Daily Wellness</h2>
+          <div className="space-y-6">
+            {/* Water Intake */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-gray-400">Water Intake (glasses)</label>
+                <span className="text-lg font-medium">{logData.waterIntake[0]}</span>
+              </div>
+              <Slider
+                value={logData.waterIntake}
+                onValueChange={(value) => setLogData((prev) => ({ ...prev, waterIntake: value }))}
+                max={12}
+                min={0}
+                step={1}
+                className="w-full"
+              />
+            </div>
+
+            {/* Sleep Hours */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-gray-400">Sleep Hours</label>
+                <span className="text-lg font-medium">{logData.sleepHours[0]}h</span>
+              </div>
+              <Slider
+                value={logData.sleepHours}
+                onValueChange={(value) => setLogData((prev) => ({ ...prev, sleepHours: value }))}
+                max={12}
+                min={0}
+                step={0.5}
+                className="w-full"
+              />
+            </div>
+
+            {/* Stress Level */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-gray-400">Stress Level (0-10)</label>
+                <span className="text-lg font-medium">{logData.stressLevel[0]}</span>
+              </div>
+              <Slider
+                value={logData.stressLevel}
+                onValueChange={(value) => setLogData((prev) => ({ ...prev, stressLevel: value }))}
+                max={10}
+                min={0}
+                step={1}
+                className="w-full"
+              />
+            </div>
+
+            {/* Mood Rating */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-gray-400">Mood (1-10)</label>
+                <span className="text-lg font-medium">{logData.moodRating[0]}</span>
+              </div>
+              <Slider
+                value={logData.moodRating}
+                onValueChange={(value) => setLogData((prev) => ({ ...prev, moodRating: value }))}
+                max={10}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+            </div>
+
+            {/* Energy Level */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-gray-400">Energy Level (1-10)</label>
+                <span className="text-lg font-medium">{logData.energyLevel[0]}</span>
+              </div>
+              <Slider
+                value={logData.energyLevel}
+                onValueChange={(value) => setLogData((prev) => ({ ...prev, energyLevel: value }))}
+                max={10}
+                min={1}
+                step={1}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4">Notes</h2>
+          <Textarea
+            placeholder="How are you feeling today? Any observations or concerns..."
+            value={logData.notes}
+            onChange={(e) => setLogData((prev) => ({ ...prev, notes: e.target.value }))}
+            className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl min-h-[100px] resize-none"
+          />
+        </div>
+
+        {/* Save Button */}
+        <Button
+          onClick={saveLog}
+          className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-medium"
+        >
+          Save Daily Log
+        </Button>
 
         {/* Trends Section */}
         <div>
@@ -1643,7 +2113,7 @@ function LogScreen() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-400">Stool Consistency</span>
-                <span className="font-bold text-2xl">3</span>
+                <span className="font-bold text-2xl">{logData.bristolType || "3"}</span>
               </div>
               <p className="text-xs text-gray-500 mb-3">14 days</p>
               <div className="flex items-end gap-1 h-16">
@@ -1669,7 +2139,7 @@ function LogScreen() {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-400">Symptom Severity</span>
-                <span className="font-bold text-2xl">2</span>
+                <span className="font-bold text-2xl">{logData.painLevel[0]}</span>
               </div>
               <p className="text-xs text-gray-500 mb-3">14 days</p>
               <div className="flex items-end gap-1 h-16">
@@ -1678,6 +2148,32 @@ function LogScreen() {
                     key={index}
                     className="bg-green-500 rounded-t flex-1"
                     style={{ height: `${(value / 5) * 100}%` }}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>M</span>
+                <span>T</span>
+                <span>W</span>
+                <span>T</span>
+                <span>F</span>
+                <span>S</span>
+                <span>S</span>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">Mood & Energy</span>
+                <span className="font-bold text-2xl">{logData.moodRating[0]}</span>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">14 days</p>
+              <div className="flex items-end gap-1 h-16">
+                {[7, 6, 8, 7, 7, 6, 8, 7, 7, 8, 6, 7, 8, 7].map((value, index) => (
+                  <div
+                    key={index}
+                    className="bg-blue-500 rounded-t flex-1"
+                    style={{ height: `${(value / 10) * 100}%` }}
                   />
                 ))}
               </div>
