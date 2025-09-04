@@ -2195,54 +2195,350 @@ function LogScreen() {
 }
 
 function AdviceScreen() {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      content: "Hi there! I'm here to help you understand your gut health better. What can I assist you with today?",
+    },
+  ])
+  const [inputMessage, setInputMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return
+
+    const userMessage = { role: "user", content: inputMessage }
+    setMessages((prev) => [...prev, userMessage])
+    setInputMessage("")
+    setIsLoading(true)
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          context: "gut health advice",
+        }),
+      })
+
+      const data = await response.json()
+      setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-6 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">AI Coach</h1>
         <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
           <span className="text-lg">⚙️</span>
         </Button>
       </div>
 
-      <div className="space-y-8">
-        {/* AI Assistant */}
-        <div className="bg-gray-800 rounded-xl p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold">AI</span>
+      <div className="flex-1 bg-gray-800 rounded-xl p-4 mb-4 overflow-y-auto max-h-96">
+        <div className="space-y-4">
+          {messages.map((message, index) => (
+            <div key={index} className={`flex items-start gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  message.role === "assistant" ? "bg-green-500" : "bg-blue-500"
+                }`}
+              >
+                <span className="text-white font-bold text-sm">{message.role === "assistant" ? "AI" : "You"}</span>
+              </div>
+              <div className={`flex-1 p-3 rounded-lg ${message.role === "assistant" ? "bg-gray-700" : "bg-blue-600"}`}>
+                <p className="text-sm leading-relaxed">{message.content}</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-medium mb-2">GutGuard AI</h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Hi there! I'm here to help you understand your gut health better. What can I assist you with today?
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { title: "Flare plan (24-48 h)", bg: "bg-red-100" },
-            { title: "Gentle 7-day plan", bg: "bg-blue-100" },
-            { title: "Trigger hunt", bg: "bg-yellow-100" },
-            { title: "Doctor checklist", bg: "bg-green-100" },
-          ].map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className={`${action.bg} border-gray-600 text-gray-900 hover:bg-opacity-80 h-16 rounded-xl`}
-            >
-              {action.title}
-            </Button>
           ))}
+          {isLoading && (
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">AI</span>
+              </div>
+              <div className="flex-1 p-3 rounded-lg bg-gray-700">
+                <p className="text-sm">Thinking...</p>
+              </div>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+          placeholder="Ask about your gut health..."
+          className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+        />
+        <Button
+          onClick={sendMessage}
+          disabled={!inputMessage.trim() || isLoading}
+          className="bg-green-500 hover:bg-green-600 text-white px-6"
+        >
+          Send
+        </Button>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          {
+            title: "Flare plan (24-48 h)",
+            bg: "bg-red-100",
+            message: "I'm experiencing a gut health flare-up. Can you provide a 24-48 hour management plan?",
+          },
+          {
+            title: "Gentle 7-day plan",
+            bg: "bg-blue-100",
+            message: "Can you create a gentle 7-day gut health recovery plan for me?",
+          },
+          {
+            title: "Trigger hunt",
+            bg: "bg-yellow-100",
+            message: "Help me identify potential triggers for my digestive issues.",
+          },
+          {
+            title: "Doctor checklist",
+            bg: "bg-green-100",
+            message: "What should I discuss with my doctor about my gut health?",
+          },
+        ].map((action, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            onClick={() => {
+              setInputMessage(action.message)
+              setTimeout(() => sendMessage(), 100)
+            }}
+            className={`${action.bg} border-gray-600 text-gray-900 hover:bg-opacity-80 h-16 rounded-xl`}
+          >
+            {action.title}
+          </Button>
+        ))}
       </div>
     </div>
   )
 }
 
 function SettingsScreen() {
+  const [currentView, setCurrentView] = useState("main")
+  const [theme, setTheme] = useState("Dark")
+  const [language, setLanguage] = useState("English")
+  const [notifications, setNotifications] = useState({
+    hydration: true,
+    dailyCheck: true,
+    stoolLog: true,
+    symptoms: false,
+  })
+
+  const handleProfileEdit = () => {
+    alert("Profile editing feature - redirects to onboarding form with current data pre-filled")
+  }
+
+  const handleLanguageChange = () => {
+    const languages = ["English", "Spanish", "French", "German", "Italian"]
+    const currentIndex = languages.indexOf(language)
+    const nextIndex = (currentIndex + 1) % languages.length
+    setLanguage(languages[nextIndex])
+  }
+
+  const handleNotificationSettings = () => {
+    setCurrentView("notifications")
+  }
+
+  const handleDataExport = () => {
+    const exportData = {
+      profile: { age: 30, gender: "Male", height: 175, weight: 70 },
+      healthLogs: { symptoms: [], stoolLogs: [], painLevels: [] },
+      exportDate: new Date().toISOString(),
+    }
+
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: "application/json" })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = "gutguard-data-export.json"
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleThemeToggle = () => {
+    setTheme(theme === "Dark" ? "Light" : "Dark")
+  }
+
+  const handleDisclaimer = () => {
+    setCurrentView("disclaimer")
+  }
+
+  const handlePrivacyPolicy = () => {
+    setCurrentView("privacy")
+  }
+
+  const handleResetOnboarding = () => {
+    if (confirm("Are you sure you want to reset your onboarding? This will clear all your progress.")) {
+      localStorage.clear()
+      window.location.reload()
+    }
+  }
+
+  const handleManageSubscription = () => {
+    window.open("https://buy.stripe.com/manage/subscription", "_blank")
+  }
+
+  if (currentView === "notifications") {
+    return (
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-gray-800"
+            onClick={() => setCurrentView("main")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-medium">Notification Settings</h1>
+        </div>
+
+        <div className="space-y-6">
+          {Object.entries(notifications).map(([key, value]) => (
+            <div key={key} className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium capitalize">{key.replace(/([A-Z])/g, " $1")}</h3>
+                <p className="text-sm text-gray-400">
+                  {key === "hydration" && "Daily water intake reminders"}
+                  {key === "dailyCheck" && "Daily health check-in notifications"}
+                  {key === "stoolLog" && "Stool logging reminders"}
+                  {key === "symptoms" && "Symptom tracking alerts"}
+                </p>
+              </div>
+              <Switch
+                checked={value}
+                onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, [key]: checked }))}
+                className="data-[state=checked]:bg-green-500"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (currentView === "disclaimer") {
+    return (
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-gray-800"
+            onClick={() => setCurrentView("main")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-medium">Full Disclaimer</h1>
+        </div>
+
+        <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
+          <p>
+            <strong>Medical Disclaimer:</strong> GutGuard is an educational tool and is not intended to provide medical
+            advice, diagnosis, or treatment. Always consult with qualified healthcare professionals regarding any health
+            concerns.
+          </p>
+
+          <p>
+            <strong>Not a Medical Device:</strong> This application is not a medical device and should not be used as a
+            substitute for professional medical care, diagnosis, or treatment.
+          </p>
+
+          <p>
+            <strong>Emergency Situations:</strong> If you experience severe symptoms or medical emergencies, seek
+            immediate medical attention. Do not rely on this app for emergency medical situations.
+          </p>
+
+          <p>
+            <strong>Data Accuracy:</strong> While we strive for accuracy, the information provided may not be complete
+            or up-to-date. Users are responsible for verifying information with healthcare providers.
+          </p>
+
+          <p>
+            <strong>Individual Results:</strong> Health recommendations are general in nature and may not be suitable
+            for everyone. Individual results may vary.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentView === "privacy") {
+    return (
+      <div className="p-6">
+        <div className="flex items-center gap-4 mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-gray-800"
+            onClick={() => setCurrentView("main")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-medium">Privacy Policy</h1>
+        </div>
+
+        <div className="space-y-4 text-sm text-gray-300 leading-relaxed">
+          <p>
+            <strong>Data Collection:</strong> We collect health information you provide to personalize your experience
+            and provide relevant insights.
+          </p>
+
+          <p>
+            <strong>Data Usage:</strong> Your data is used to provide personalized health insights, track your progress,
+            and improve our services.
+          </p>
+
+          <p>
+            <strong>Data Security:</strong> We implement industry-standard security measures to protect your personal
+            health information.
+          </p>
+
+          <p>
+            <strong>Data Sharing:</strong> We do not sell or share your personal health data with third parties without
+            your explicit consent.
+          </p>
+
+          <p>
+            <strong>Data Retention:</strong> Your data is retained as long as your account is active or as needed to
+            provide services.
+          </p>
+
+          <p>
+            <strong>Your Rights:</strong> You have the right to access, update, or delete your personal information at
+            any time.
+          </p>
+
+          <p>
+            <strong>Contact:</strong> For privacy concerns, contact us at privacy@gutguard.com
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center gap-4 mb-8">
@@ -2256,7 +2552,10 @@ function SettingsScreen() {
         {/* Profile Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Profile</h2>
-          <div className="bg-gray-800 rounded-xl p-4 flex items-center gap-4">
+          <button
+            onClick={handleProfileEdit}
+            className="w-full bg-gray-800 rounded-xl p-4 flex items-center gap-4 hover:bg-gray-700 transition-colors"
+          >
             <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
               <svg width="24" height="24" viewBox="0 0 24 24" className="text-white">
                 <path
@@ -2265,7 +2564,7 @@ function SettingsScreen() {
                 />
               </svg>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 text-left">
               <h3 className="font-medium">Profile & Health</h3>
               <p className="text-sm text-gray-400">Edit your profile and health information</p>
             </div>
@@ -2275,25 +2574,31 @@ function SettingsScreen() {
                 d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
               />
             </svg>
-          </div>
+          </button>
         </div>
 
         {/* Preferences Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Preferences</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleLanguageChange}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <div>
-                <h3 className="font-medium">Language</h3>
-                <p className="text-sm text-gray-400">English</p>
+                <h3 className="font-medium text-left">Language</h3>
+                <p className="text-sm text-gray-400 text-left">{language}</p>
               </div>
-              <span className="text-gray-400">EN</span>
-            </div>
+              <span className="text-gray-400">{language.slice(0, 2).toUpperCase()}</span>
+            </button>
 
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleNotificationSettings}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <div>
-                <h3 className="font-medium">Notifications</h3>
-                <p className="text-sm text-gray-400">Hydration, Daily Check, Stool Log</p>
+                <h3 className="font-medium text-left">Notifications</h3>
+                <p className="text-sm text-gray-400 text-left">Hydration, Daily Check, Stool Log</p>
               </div>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2301,12 +2606,15 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
 
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleDataExport}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <div>
-                <h3 className="font-medium">Data Export</h3>
-                <p className="text-sm text-gray-400">Export your data in JSON or PDF format</p>
+                <h3 className="font-medium text-left">Data Export</h3>
+                <p className="text-sm text-gray-400 text-left">Export your data in JSON or PDF format</p>
               </div>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2314,15 +2622,18 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
 
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleThemeToggle}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <div>
-                <h3 className="font-medium">Theme</h3>
-                <p className="text-sm text-gray-400">Light</p>
+                <h3 className="font-medium text-left">Theme</h3>
+                <p className="text-sm text-gray-400 text-left">{theme}</p>
               </div>
-              <span className="text-gray-400">Light</span>
-            </div>
+              <span className="text-gray-400">{theme}</span>
+            </button>
           </div>
         </div>
 
@@ -2330,7 +2641,10 @@ function SettingsScreen() {
         <div>
           <h2 className="text-lg font-semibold mb-4">Legal</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleDisclaimer}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <span className="font-medium">Full Disclaimer</span>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2338,9 +2652,12 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
 
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handlePrivacyPolicy}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <span className="font-medium">Privacy Policy</span>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2348,7 +2665,7 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -2356,7 +2673,10 @@ function SettingsScreen() {
         <div>
           <h2 className="text-lg font-semibold mb-4">Other</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleResetOnboarding}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <span className="font-medium">Reset Onboarding</span>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2364,9 +2684,12 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
 
-            <div className="flex items-center justify-between">
+            <button
+              onClick={handleManageSubscription}
+              className="w-full flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+            >
               <span className="font-medium">Manage Subscription</span>
               <svg width="20" height="20" viewBox="0 0 20 20" className="text-gray-400">
                 <path
@@ -2374,7 +2697,7 @@ function SettingsScreen() {
                   d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 />
               </svg>
-            </div>
+            </button>
           </div>
         </div>
       </div>
