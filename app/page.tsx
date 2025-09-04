@@ -4,8 +4,6 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -16,6 +14,7 @@ export default function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0)
   const [showDashboard, setShowDashboard] = useState(false)
   const [dashboardTab, setDashboardTab] = useState("dashboard")
+  const [showDevControls, setShowDevControls] = useState(false)
 
   const [formData, setFormData] = useState({
     agreement: false,
@@ -71,6 +70,30 @@ export default function OnboardingFlow() {
   const startDashboard = () => setShowDashboard(true)
   const switchTab = (tab: string) => setDashboardTab(tab)
 
+  const resetToSplash = () => {
+    setShowSplash(true)
+    setShowDashboard(false)
+    setCurrentStep(0)
+  }
+
+  const goToOnboarding = () => {
+    setShowSplash(false)
+    setShowDashboard(false)
+    setCurrentStep(0)
+  }
+
+  const goToPaywall = () => {
+    setShowSplash(false)
+    setShowDashboard(false)
+    setCurrentStep(10)
+  }
+
+  const goToDashboard = () => {
+    setShowSplash(false)
+    setShowDashboard(true)
+    setDashboardTab("dashboard")
+  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false)
@@ -79,9 +102,58 @@ export default function OnboardingFlow() {
     return () => clearTimeout(timer)
   }, [])
 
+  const DevControls = () => (
+    <div className="fixed top-4 right-4 z-50">
+      {!showDevControls ? (
+        <button
+          onClick={() => setShowDevControls(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
+        >
+          Dev
+        </button>
+      ) : (
+        <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl min-w-48">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-white font-medium text-sm">Navigation Test</h3>
+            <button onClick={() => setShowDevControls(false)} className="text-gray-400 hover:text-white text-lg">
+              ×
+            </button>
+          </div>
+          <div className="space-y-2">
+            <button
+              onClick={resetToSplash}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
+            >
+              Splash Screen
+            </button>
+            <button
+              onClick={goToOnboarding}
+              className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm"
+            >
+              Onboarding Flow
+            </button>
+            <button
+              onClick={goToPaywall}
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm"
+            >
+              Paywall
+            </button>
+            <button
+              onClick={goToDashboard}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
+            >
+              Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   if (showSplash) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <DevControls />
         <div className="text-center">
           <div className="relative w-32 h-32 mx-auto mb-8">
             <img
@@ -101,6 +173,7 @@ export default function OnboardingFlow() {
   if (showDashboard) {
     return (
       <div className="min-h-screen bg-gray-900 text-white">
+        <DevControls />
         {/* Dashboard Content */}
         <div className="pb-20">
           {dashboardTab === "dashboard" && <DashboardScreen />}
@@ -137,1230 +210,76 @@ export default function OnboardingFlow() {
     )
   }
 
-  if (currentStep === 0) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto flex flex-col h-screen">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="relative w-48 h-48 flex items-center justify-center">
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-                alt="GutGuard Shield Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h1 className="text-2xl font-bold text-balance">Welcome to GutGuard</h1>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Your AI-powered health companion. GutGuard is an educational companion, not a medical device. If you
-                report red flags, we'll show urgent-care guidance and limit non-urgent advice.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => updateFormData("agreement", !formData.agreement)}
-                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
-                  formData.agreement
-                    ? "border-green-500 bg-green-500/10 text-green-400"
-                    : "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                      formData.agreement ? "border-green-500 bg-green-500" : "border-gray-500"
-                    }`}
-                  >
-                    {formData.agreement && (
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="text-left">I understand and agree to the terms and conditions</span>
-                </div>
-              </button>
-            </div>
-
-            {/* Progress dots */}
-            <div className="flex justify-center gap-2 py-4">
-              {[1, 2, 3, 4, 5, 6, 7].map((dot) => (
-                <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-white" : "bg-gray-600"}`} />
-              ))}
-            </div>
-
-            {formData.agreement && (
-              <Button
-                onClick={nextStep}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl animate-in slide-in-from-bottom-4 duration-300"
-              >
-                Continue
-              </Button>
-            )}
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-6">
+      <DevControls />
+      <div className="max-w-sm mx-auto flex flex-col h-screen">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="relative w-48 h-48 flex items-center justify-center">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+              alt="GutGuard Shield Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
-      </div>
-    )
-  }
 
-  if (currentStep === 1) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((dot) => (
-              <div key={dot} className={`w-2 h-2 rounded-full ${dot <= 2 ? "bg-white" : "bg-gray-600"}`} />
-            ))}
+        {/* Content */}
+        <div className="space-y-6">
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-balance">Welcome to GutGuard</h1>
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Your AI-powered health companion. GutGuard is an educational companion, not a medical device. If you
+              report red flags, we'll show urgent-care guidance and limit non-urgent advice.
+            </p>
           </div>
 
-          {/* Main content */}
-          <div className="space-y-6">
-            <h1 className="text-2xl font-medium text-balance">Tell us about yourself</h1>
-
-            {/* Age input */}
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Age</label>
-              <Input
-                type="number"
-                placeholder="Enter your age"
-                value={formData.age}
-                onChange={(e) => updateFormData("age", e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12"
-              />
-            </div>
-
-            {/* Gender selection */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {["Male", "Female", "Intersex", "Prefer not to say"].map((gender) => (
-                  <Button
-                    key={gender}
-                    variant={formData.gender === gender ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => updateFormData("gender", gender)}
-                    className={`rounded-full ${
-                      formData.gender === gender
-                        ? "bg-white text-black"
-                        : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                    }`}
-                  >
-                    {gender}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Height input */}
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Height (cm)</label>
-              <Input
-                type="number"
-                placeholder="Enter your height"
-                value={formData.height}
-                onChange={(e) => updateFormData("height", e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12"
-              />
-            </div>
-
-            {/* Weight input */}
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Weight (kg)</label>
-              <Input
-                type="number"
-                placeholder="Enter your weight"
-                value={formData.weight}
-                onChange={(e) => updateFormData("weight", e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12"
-              />
-            </div>
-
-            {/* BMI display */}
-            {calculateBMI() && (
-              <div className="bg-gray-800 rounded-xl p-4 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">BMI</span>
-                  <span className="text-lg font-medium">{calculateBMI()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Category</span>
-                  <span className={`text-sm font-medium ${getBMICategory(calculateBMI()).color}`}>
-                    {getBMICategory(calculateBMI()).category}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
+          <div className="space-y-4">
+            <button
+              onClick={() => updateFormData("agreement", !formData.agreement)}
+              className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
+                formData.agreement
+                  ? "border-green-500 bg-green-500/10 text-green-400"
+                  : "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
+              }`}
             >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 2) {
-    const conditions = [
-      "Colon polyps (parent/sibling/child)",
-      "Colon cancer (parent/sibling/child)",
-      "Stomach cancer (parent/sibling/child)",
-      "None/Not sure",
-    ]
-
-    const handleConditionChange = (condition: string, checked: boolean) => {
-      const currentConditions = formData.familyHistory
-      if (checked) {
-        updateFormData("familyHistory", [...currentConditions, condition])
-      } else {
-        updateFormData(
-          "familyHistory",
-          currentConditions.filter((c) => c !== condition),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">Family History</h1>
-          </div>
-
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="text-sm text-gray-400 mb-2">Step 3/10</div>
-            <div className="w-full bg-gray-700 rounded-full h-1">
-              <div className="bg-white h-1 rounded-full" style={{ width: "30%" }} />
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h2 className="text-xl font-medium text-balance">
-                Do you have a family history of colon or stomach issues?
-              </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                This information helps us understand your risk factors and provide personalized guidance.
-              </p>
-            </div>
-
-            {/* Condition checkboxes */}
-            <div className="space-y-4">
-              {conditions.map((condition) => (
-                <div key={condition} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={condition}
-                    checked={formData.familyHistory.includes(condition)}
-                    onCheckedChange={(checked) => handleConditionChange(condition, checked as boolean)}
-                    className="border-gray-600 data-[state=checked]:bg-white data-[state=checked]:border-white"
-                  />
-                  <label htmlFor={condition} className="text-sm text-gray-300 leading-relaxed cursor-pointer">
-                    {condition}
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            {/* Age at diagnosis input */}
-            <div className="space-y-2">
-              <Input
-                type="number"
-                placeholder="Age at diagnosis (optional)"
-                value={formData.diagnosisAge}
-                onChange={(e) => updateFormData("diagnosisAge", e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12"
-              />
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 3) {
-    const symptoms = [
-      "Blood in stool",
-      "Black/tarry stool",
-      "Persistent change >4 weeks",
-      "Unintentional weight loss",
-      "Persistent left-lower (sigmoid) pain >4 weeks",
-      "Diagnosed anemia",
-      "Fever",
-      "None",
-    ]
-
-    const handleSymptomChange = (symptom: string, checked: boolean) => {
-      const currentSymptoms = formData.redFlagSymptoms
-      if (checked) {
-        updateFormData("redFlagSymptoms", [...currentSymptoms, symptom])
-      } else {
-        updateFormData(
-          "redFlagSymptoms",
-          currentSymptoms.filter((s) => s !== symptom),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </div>
-
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="text-sm text-gray-400 mb-2">Step 4/10</div>
-            <div className="w-full bg-gray-700 rounded-full h-1">
-              <div className="bg-white h-1 rounded-full" style={{ width: "40%" }} />
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-medium text-balance leading-tight">
-                Do any of these red flag symptoms apply to you?
-              </h2>
-            </div>
-
-            {/* Instruction text */}
-            <p className="text-sm text-gray-400">Select all that apply. If none, select 'None'.</p>
-
-            {/* Symptom checkboxes */}
-            <div className="space-y-4">
-              {symptoms.map((symptom) => (
-                <div key={symptom} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={symptom}
-                    checked={formData.redFlagSymptoms.includes(symptom)}
-                    onCheckedChange={(checked) => handleSymptomChange(symptom, checked as boolean)}
-                    className="border-gray-600 data-[state=checked]:bg-white data-[state=checked]:border-white"
-                  />
-                  <label htmlFor={symptom} className="text-sm text-gray-300 leading-relaxed cursor-pointer">
-                    {symptom}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 4) {
-    const symptoms = [
-      "Persistent upper-abdominal pain >4 weeks",
-      "Persistent vomiting",
-      "Early fullness",
-      "Painful/difficult swallowing",
-      "Black/tarry stool",
-      "Diagnosed anemia",
-      "Unexplained fatigue or weakness",
-      "Loss of appetite",
-      "Feeling full after eating small amounts",
-      "Persistent heartburn or indigestion",
-      "Abdominal bloating or swelling",
-      "Changes in bowel habits lasting >2 weeks",
-      "Narrow or ribbon-like stools",
-      "Persistent cramping or gas pain",
-      "Jaundice (yellowing of skin/eyes)",
-      "Persistent nausea",
-      "None",
-    ]
-
-    const handleSymptomChange = (symptom: string, checked: boolean) => {
-      const currentSymptoms = formData.redFlagSymptoms2
-      if (checked) {
-        updateFormData("redFlagSymptoms2", [...currentSymptoms, symptom])
-      } else {
-        updateFormData(
-          "redFlagSymptoms2",
-          currentSymptoms.filter((s) => s !== symptom),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="text-sm text-gray-400">5/10</div>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-medium text-balance leading-tight">
-                Do any of these red flag symptoms apply to you?
-              </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                These symptoms may indicate a more serious condition. If you experience any of these, please consult a
-                healthcare professional.
-              </p>
-            </div>
-
-            {/* Symptom checkboxes */}
-            <div className="space-y-4">
-              {symptoms.map((symptom) => (
-                <div key={symptom} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={symptom}
-                    checked={formData.redFlagSymptoms2.includes(symptom)}
-                    onCheckedChange={(checked) => handleSymptomChange(symptom, checked as boolean)}
-                    className="border-gray-600 data-[state=checked]:bg-white data-[state=checked]:border-white"
-                  />
-                  <label htmlFor={symptom} className="text-sm text-gray-300 leading-relaxed cursor-pointer">
-                    {symptom}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 5) {
-    const symptoms = [
-      "Diarrhea",
-      "Constipation",
-      "Bloating/Gas",
-      "Nausea",
-      "Left-Lower Abdominal Pain",
-      "Stomach Pain",
-      "Heartburn",
-      "Loss of Appetite",
-      "Fatigue",
-      "Cramping",
-      "Acid Reflux",
-      "Indigestion",
-      "Vomiting",
-      "Headache",
-      "None",
-    ]
-
-    const handleSymptomChange = (symptom: string, checked: boolean) => {
-      const currentSymptoms = formData.dailySymptoms
-      if (checked) {
-        updateFormData("dailySymptoms", [...currentSymptoms, symptom])
-      } else {
-        updateFormData(
-          "dailySymptoms",
-          currentSymptoms.filter((s) => s !== symptom),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">Log Today's Symptoms</h1>
-          </div>
-
-          {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((dot) => (
-              <div key={dot} className={`w-2 h-2 rounded-full ${dot <= 5 ? "bg-white" : "bg-gray-600"}`} />
-            ))}
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <h2 className="text-2xl font-medium text-balance">How are you feeling today?</h2>
-
-            {/* Symptom buttons */}
-            <div className="flex flex-wrap gap-2">
-              {symptoms.map((symptom) => (
-                <Button
-                  key={symptom}
-                  variant={formData.dailySymptoms.includes(symptom) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleSymptomChange(symptom, !formData.dailySymptoms.includes(symptom))}
-                  className={`rounded-full text-sm ${
-                    formData.dailySymptoms.includes(symptom)
-                      ? "bg-white text-black"
-                      : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                    formData.agreement ? "border-green-500 bg-green-500" : "border-gray-500"
                   }`}
                 >
-                  {symptom}
-                </Button>
-              ))}
-            </div>
-
-            {/* Pain Level Slider */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm text-gray-400">Pain Level (0-10)</label>
-                <span className="text-lg font-medium">{formData.painLevel[0]}</span>
-              </div>
-              <Slider
-                value={formData.painLevel}
-                onValueChange={(value) => updateFormData("painLevel", value)}
-                max={10}
-                min={0}
-                step={1}
-                className="w-full"
-              />
-            </div>
-
-            {/* Notes textarea */}
-            <div className="space-y-2">
-              <Textarea
-                placeholder="Notes (optional)"
-                value={formData.notes}
-                onChange={(e) => updateFormData("notes", e.target.value)}
-                className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl min-h-[100px] resize-none"
-              />
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 6) {
-    const stoolTypes = [
-      {
-        type: "Type 1",
-        description: "Separate hard lumps, like nuts (hard to pass)",
-      },
-      {
-        type: "Type 2",
-        description: "Sausage-shaped but lumpy",
-      },
-      {
-        type: "Type 3",
-        description: "Like a sausage but with cracks on surface",
-      },
-      {
-        type: "Type 4",
-        description: "Like a sausage or snake, smooth and soft",
-      },
-      {
-        type: "Type 5",
-        description: "Soft blobs with clear-cut edges",
-      },
-      {
-        type: "Type 6",
-        description: "Fluffy pieces with ragged edges, mushy",
-      },
-      {
-        type: "Type 7",
-        description: "Watery, no solid pieces, entirely liquid",
-      },
-    ]
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">Stool Pattern</h1>
-          </div>
-
-          {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((dot) => (
-              <div key={dot} className={`w-2 h-2 rounded-full ${dot <= 6 ? "bg-white" : "bg-gray-600"}`} />
-            ))}
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <h2 className="text-2xl font-medium text-balance leading-tight">
-                Describe your stool pattern over the last 7 days
-              </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Select the Bristol scale that best represents your stool pattern over the last 7 days:
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {stoolTypes.map((item) => (
-                <div key={item.type} className="space-y-2">
-                  <Button
-                    variant={formData.stoolType === item.type ? "default" : "outline"}
-                    onClick={() => updateFormData("stoolType", item.type)}
-                    className={`w-full justify-start h-12 rounded-xl ${
-                      formData.stoolType === item.type
-                        ? "bg-white text-black"
-                        : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                    }`}
-                  >
-                    {item.type}
-                  </Button>
-                  {formData.stoolType === item.type && (
-                    <div className="bg-gray-800 rounded-lg p-3 ml-4">
-                      <p className="text-sm text-gray-300">{item.description}</p>
-                    </div>
+                  {formData.agreement && (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
                   )}
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-gray-300">Pencil-thin (any day?)</label>
-                <Switch
-                  checked={formData.pencilThin}
-                  onCheckedChange={(checked) => updateFormData("pencilThin", checked)}
-                  className={`${
-                    formData.pencilThin ? "data-[state=checked]:bg-red-500" : "data-[state=unchecked]:bg-gray-600"
-                  }`}
-                />
+                <span className="text-left">I understand and agree to the terms and conditions</span>
               </div>
-
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-gray-300">Mucus?</label>
-                <Switch
-                  checked={formData.mucus}
-                  onCheckedChange={(checked) => updateFormData("mucus", checked)}
-                  className={`${
-                    formData.mucus ? "data-[state=checked]:bg-red-500" : "data-[state=unchecked]:bg-gray-600"
-                  }`}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-gray-300">Visible blood?</label>
-                <Switch
-                  checked={formData.visibleBlood}
-                  onCheckedChange={(checked) => updateFormData("visibleBlood", checked)}
-                  className={`${
-                    formData.visibleBlood ? "data-[state=checked]:bg-red-500" : "data-[state=unchecked]:bg-gray-600"
-                  }`}
-                />
-              </div>
-            </div>
-
-            {/* Optional photo upload section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-300">Optional</h3>
-
-              <Button
-                variant="outline"
-                className="w-full bg-gray-800 border-gray-600 text-white hover:bg-gray-700 h-12 rounded-xl flex items-center justify-between"
-              >
-                <span>Upload a photo</span>
-                <Camera className="h-5 w-5" />
-              </Button>
-
-              <p className="text-xs text-gray-500 leading-relaxed">
-                Your photos are private and will not be shared without your consent.
-              </p>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 7) {
-    const diagnoses = [
-      "IBS",
-      "IBD (Crohn's/UC)",
-      "Diverticulitis",
-      "GERD/Ulcer",
-      "H. pylori",
-      "Colon polyps",
-      "Celiac disease",
-      "None",
-    ]
-
-    const handleDiagnosisChange = (diagnosis: string, checked: boolean) => {
-      const currentDiagnoses = formData.priorDiagnoses
-      if (checked) {
-        updateFormData("priorDiagnoses", [...currentDiagnoses, diagnosis])
-      } else {
-        updateFormData(
-          "priorDiagnoses",
-          currentDiagnoses.filter((d) => d !== diagnosis),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">Prior Diagnoses</h1>
-          </div>
-
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="text-sm text-gray-400 mb-2">Step 8/10</div>
-            <div className="w-full bg-gray-700 rounded-full h-1">
-              <div className="bg-white h-1 rounded-full" style={{ width: "80%" }} />
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-medium text-balance leading-tight">
-                Have you been diagnosed with any of the following?
-              </h2>
-            </div>
-
-            {/* Diagnosis buttons */}
-            <div className="flex flex-wrap gap-2">
-              {diagnoses.map((diagnosis) => (
-                <Button
-                  key={diagnosis}
-                  variant={formData.priorDiagnoses.includes(diagnosis) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleDiagnosisChange(diagnosis, !formData.priorDiagnoses.includes(diagnosis))}
-                  className={`rounded-full text-sm ${
-                    formData.priorDiagnoses.includes(diagnosis)
-                      ? "bg-white text-black"
-                      : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                  }`}
-                >
-                  {diagnosis}
-                </Button>
-              ))}
-            </div>
-
-            {/* Last Colonoscopy/Endoscopy section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Last Colonoscopy/Endoscopy</h3>
-
-              <div className="relative">
-                <Input
-                  type="date"
-                  placeholder="Select Date"
-                  value={formData.lastColonoscopyDate}
-                  onChange={(e) => updateFormData("lastColonoscopyDate", e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12 pr-12"
-                />
-                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 8) {
-    const medications = [
-      "NSAIDs",
-      "PPI/acid reducer",
-      "Antibiotics",
-      "Iron",
-      "Metformin",
-      "Laxatives",
-      "Anti-diarrheals",
-      "Fiber supplements (psyllium)",
-      "None",
-    ]
-
-    const handleMedicationChange = (medication: string, checked: boolean) => {
-      const currentMedications = formData.medications
-      if (checked) {
-        updateFormData("medications", [...currentMedications, medication])
-      } else {
-        updateFormData(
-          "medications",
-          currentMedications.filter((m) => m !== medication),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header with back arrow and Next */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevStep}
-              className="text-white hover:bg-gray-800 rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-medium">Medications</h1>
-          </div>
-
-          {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="text-sm text-gray-400 mb-2">Step 9/10</div>
-            <div className="w-full bg-gray-700 rounded-full h-1">
-              <div className="bg-white h-1 rounded-full" style={{ width: "90%" }} />
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-medium text-balance leading-tight">
-                Are you currently taking any medications?
-              </h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                This includes prescription and over-the-counter drugs, as well as recent antibiotics (past 2 months).
-              </p>
-            </div>
-
-            {/* Medication buttons */}
-            <div className="flex flex-wrap gap-2">
-              {medications.map((medication) => (
-                <Button
-                  key={medication}
-                  variant={formData.medications.includes(medication) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleMedicationChange(medication, !formData.medications.includes(medication))}
-                  className={`rounded-full text-sm ${
-                    formData.medications.includes(medication)
-                      ? "bg-white text-black"
-                      : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                  }`}
-                >
-                  {medication}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 9) {
-    const triggers = [
-      "Onions/garlic",
-      "Wheat breads/noodles",
-      "Beans/legumes",
-      "Milk/ice cream",
-      "Very spicy",
-      "Fried/fatty/gata",
-      "Coffee",
-      "Alcohol",
-      "Soda",
-      "Sugar-free sweeteners (sorbitol/xylitol)",
-      "Not sure",
-    ]
-
-    const handleTriggerChange = (trigger: string, checked: boolean) => {
-      const currentTriggers = formData.triggers
-      if (checked) {
-        updateFormData("triggers", [...currentTriggers, trigger])
-      } else {
-        updateFormData(
-          "triggers",
-          currentTriggers.filter((t) => t !== trigger),
-        )
-      }
-    }
-
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Progress dots */}
-          <div className="flex justify-center gap-2 mb-8">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((dot) => (
-              <div key={dot} className={`w-2 h-2 rounded-full ${dot <= 9 ? "bg-white" : "bg-gray-600"}`} />
-            ))}
-          </div>
-
-          {/* Main content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-2xl font-medium text-balance leading-tight">What are your triggers?</h2>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Select all that apply. This helps us personalize your experience.
-              </p>
-            </div>
-
-            {/* Trigger buttons */}
-            <div className="flex flex-wrap gap-2">
-              {triggers.map((trigger) => (
-                <Button
-                  key={trigger}
-                  variant={formData.triggers.includes(trigger) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleTriggerChange(trigger, !formData.triggers.includes(trigger))}
-                  className={`rounded-full text-sm ${
-                    formData.triggers.includes(trigger)
-                      ? "bg-white text-black"
-                      : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                  }`}
-                >
-                  {trigger}
-                </Button>
-              ))}
-            </div>
-
-            {/* Lifestyle section */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-medium">Lifestyle</h3>
-
-              {/* Exercise Yes/No */}
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    variant={formData.exercise === "Yes" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => updateFormData("exercise", "Yes")}
-                    className={`rounded-full ${
-                      formData.exercise === "Yes"
-                        ? "bg-white text-black"
-                        : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                    }`}
-                  >
-                    Yes
-                  </Button>
-                  <Button
-                    variant={formData.exercise === "No" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => updateFormData("exercise", "No")}
-                    className={`rounded-full ${
-                      formData.exercise === "No"
-                        ? "bg-white text-black"
-                        : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                    }`}
-                  >
-                    No
-                  </Button>
-                </div>
-              </div>
-
-              {/* Activity Level */}
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  {["Low", "Moderate", "High"].map((level) => (
-                    <Button
-                      key={level}
-                      variant={formData.activityLevel === level ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => updateFormData("activityLevel", level)}
-                      className={`rounded-full ${
-                        formData.activityLevel === level
-                          ? "bg-white text-black"
-                          : "bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                      }`}
-                    >
-                      {level}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sleep Hours */}
-              <div className="space-y-2">
-                <Input
-                  type="number"
-                  placeholder="Sleep (hrs)"
-                  value={formData.sleepHours}
-                  onChange={(e) => updateFormData("sleepHours", e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 rounded-xl h-12"
-                />
-              </div>
-
-              {/* Stress Level Slider */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm text-gray-400">Stress (0-10)</label>
-                  <span className="text-lg font-medium">{formData.stressLevel[0]}</span>
-                </div>
-                <Slider
-                  value={formData.stressLevel}
-                  onValueChange={(value) => updateFormData("stressLevel", value)}
-                  max={10}
-                  min={0}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="mt-12">
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-black font-medium h-12 rounded-xl"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 10) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <div className="max-w-sm mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" size="sm" onClick={prevStep} className="text-white hover:bg-gray-800 p-2">
-              ✕
-            </Button>
-            <h1 className="text-lg font-medium">GutGuard Pro</h1>
-            <div></div>
-          </div>
-
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-medium mb-2">Start 7-day free trial</h2>
-          </div>
-
-          {/* Features List */}
-          <div className="space-y-4 mb-8">
-            <div className="flex justify-between items-center">
-              <span className="text-sm">AI Advice</span>
-              <span className="text-xs text-gray-400">3/week</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Risk Trend Charts</span>
-              <span className="text-xs text-green-400">Unlimited</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Food Scan AI</span>
-              <span className="text-xs text-red-400">Not Available</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Custom Meal Plans</span>
-              <span className="text-xs text-green-400">Available</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Daily Guidance & Long-term Care</span>
-              <span className="text-xs text-green-400">Available</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Reminders</span>
-              <span className="text-xs text-red-400">Not Available</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">PDF Export</span>
-              <span className="text-xs text-green-400">Available</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm">Stool Log</span>
-              <span className="text-xs text-green-400">Available</span>
-            </div>
-          </div>
-
-          {/* Pricing Section */}
-          <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-medium">Pricing</h3>
-
-            {/* Monthly Plan */}
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-400">Monthly</span>
-              </div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-2xl font-bold">
-                  $14.99<span className="text-sm font-normal text-gray-400">/mo</span>
-                </span>
-              </div>
-              <Button className="w-full bg-gray-700 hover:bg-gray-600 text-white rounded-lg">Select</Button>
-            </div>
-
-            {/* Yearly Plan */}
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 relative">
-              <div className="absolute -top-2 right-4">
-                <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">Save $50</span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-400">Yearly</span>
-              </div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-2xl font-bold">
-                  $129.99<span className="text-sm font-normal text-gray-400">/yr</span>
-                </span>
-              </div>
-              <Button className="w-full bg-gray-700 hover:bg-gray-600 text-white rounded-lg">Select</Button>
-            </div>
-          </div>
-
-          {/* Restore Link */}
-          <div className="text-center mb-6">
-            <button className="text-sm text-gray-400 hover:text-white">
-              Already have a subscription? <span className="underline">Restore</span>
             </button>
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <Button
-              className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-medium"
-              onClick={startDashboard}
-            >
-              Start Free Trial
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full text-white hover:bg-gray-800 h-12"
-              onClick={() => alert("Continuing with free version")}
-            >
-              Continue Free
-            </Button>
+          {/* Progress dots */}
+          <div className="flex justify-center gap-2 py-4">
+            {[1, 2, 3, 4, 5, 6, 7].map((dot) => (
+              <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-white" : "bg-gray-600"}`} />
+            ))}
           </div>
 
-          {/* Fine Print */}
-          <p className="text-xs text-gray-500 text-center mt-4 leading-relaxed">
-            You will be charged after the free trial ends. Cancel anytime in settings.
-          </p>
+          {formData.agreement && (
+            <Button
+              onClick={nextStep}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl animate-in slide-in-from-bottom-4 duration-300"
+            >
+              Continue
+            </Button>
+          )}
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-6 flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-xl mb-4">Step {currentStep} - Coming Soon</h2>
-        <Button onClick={prevStep} variant="outline" className="border-gray-600 text-white bg-transparent">
-          Go Back
-        </Button>
       </div>
     </div>
   )
