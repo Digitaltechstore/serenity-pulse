@@ -1,17 +1,33 @@
 "use client"
 
 import React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export default function OnboardingFlow() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [showAuth, setShowAuth] = useState(false)
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+  const router = useRouter()
+  const supabase = createClient()
+
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(0)
   const [showDashboard, setShowDashboard] = useState(false)
   const [dashboardTab, setDashboardTab] = useState("dashboard")
   const [showDevControls, setShowDevControls] = useState(false)
+
+  const [authData, setAuthData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [authLoading, setAuthLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     agreement: false,
@@ -39,6 +55,93 @@ export default function OnboardingFlow() {
     sleepHours: "",
     stressLevel: [5],
   })
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+      if (!user) {
+        setShowAuth(true)
+        setShowSplash(false)
+      }
+    }
+    checkAuth()
+  }, [])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: authData.email,
+        password: authData.password,
+      })
+      if (error) throw error
+      setIsAuthenticated(true)
+      setShowAuth(false)
+      setShowSplash(true)
+    } catch (error: any) {
+      setAuthError(error.message)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthError(null)
+
+    if (authData.password !== authData.confirmPassword) {
+      setAuthError("Passwords do not match")
+      setAuthLoading(false)
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: authData.email,
+        password: authData.password,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
+          data: {
+            name: authData.name,
+          },
+        },
+      })
+      if (error) throw error
+      setAuthError("Please check your email to confirm your account")
+    } catch (error: any) {
+      setAuthError(error.message)
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!authData.email) {
+      setAuthError("Please enter your email address")
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authData.email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      if (error) throw error
+      setAuthError("Password reset email sent. Please check your inbox.")
+    } catch (error: any) {
+      setAuthError(error.message)
+    }
+  }
+
+  const updateAuthData = (field: string, value: string) => {
+    setAuthData((prev) => ({ ...prev, [field]: value }))
+  }
 
   const calculateBMI = () => {
     const heightM = Number.parseFloat(formData.height) / 100
@@ -92,82 +195,177 @@ export default function OnboardingFlow() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false)
-    }, 3000)
-
-    return () => clearTimeout(timer)
-  }, [])
-
-  const DevControls = () => {
-    if (process.env.NODE_ENV === "production") {
-      return null
+    if (isAuthenticated && showSplash) {
+      const timer = setTimeout(() => {
+        setShowSplash(false)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
+  }, [isAuthenticated, showSplash])
 
+  if (showAuth && !isAuthenticated) {
     return (
-      <div className="fixed top-4 right-4 z-50">
-        {!showDevControls ? (
-          <button
-            onClick={() => setShowDevControls(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg"
-          >
-            Dev
-          </button>
-        ) : (
-          <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-xl min-w-48">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-white font-medium text-sm">Navigation Test</h3>
-              <button onClick={() => setShowDevControls(false)} className="text-gray-400 hover:text-white text-lg">
-                ×
-              </button>
-            </div>
-            <div className="space-y-2">
-              <button
-                onClick={resetToSplash}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
-              >
-                Splash Screen
-              </button>
-              <button
-                onClick={goToOnboarding}
-                className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm"
-              >
-                Onboarding Flow
-              </button>
-              <button
-                onClick={goToPaywall}
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm"
-              >
-                Paywall
-              </button>
-              <button
-                onClick={goToDashboard}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm"
-              >
-                Dashboard
-              </button>
-            </div>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+              alt="GutGuard Logo"
+              className="w-24 h-24 mx-auto mb-4"
+            />
+            <h1 className="text-2xl font-bold text-green-400">GutGuard</h1>
+            <p className="text-gray-400">Your Digital Gut Health Companion</p>
           </div>
-        )}
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <div className="flex mb-6">
+              <button
+                onClick={() => setAuthMode("login")}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
+                  authMode === "login" ? "bg-green-500 text-white" : "text-gray-400"
+                }`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => setAuthMode("signup")}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
+                  authMode === "signup" ? "bg-green-500 text-white" : "text-gray-400"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <form onSubmit={authMode === "login" ? handleLogin : handleSignup}>
+              {authMode === "signup" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Name</label>
+                  <input
+                    type="text"
+                    value={authData.name}
+                    onChange={(e) => updateAuthData("name", e.target.value)}
+                    className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Email</label>
+                <input
+                  type="email"
+                  value={authData.email}
+                  onChange={(e) => updateAuthData("email", e.target.value)}
+                  className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Password</label>
+                <input
+                  type="password"
+                  value={authData.password}
+                  onChange={(e) => updateAuthData("password", e.target.value)}
+                  className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              {authMode === "signup" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={authData.confirmPassword}
+                    onChange={(e) => updateAuthData("confirmPassword", e.target.value)}
+                    className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
+                    placeholder="Confirm your password"
+                    required
+                  />
+                </div>
+              )}
+
+              {authError && (
+                <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm">
+                  {authError}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={authLoading}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium"
+              >
+                {authLoading ? "Processing..." : authMode === "login" ? "Login" : "Sign Up"}
+              </Button>
+
+              {authMode === "login" && (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="w-full mt-4 text-green-400 hover:text-green-300 text-sm underline"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </form>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (showSplash) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <DevControls />
-        <div className="text-center">
-          <div className="relative w-32 h-32 mx-auto mb-8">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Shield Logo"
-              className="w-full h-full animate-pulse object-contain"
-            />
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            onClick={() => setShowDevControls(!showDevControls)}
+            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+          >
+            Dev
+          </button>
+        )}
+
+        {showDevControls && (
+          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+            <div className="flex flex-col gap-2">
+              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Splash
+              </button>
+              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Onboarding
+              </button>
+              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Paywall
+              </button>
+              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-sm mx-auto flex flex-col h-screen">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+                alt="GutGuard Logo"
+                className="w-full h-full object-contain animate-pulse"
+              />
+            </div>
           </div>
 
-          <h1 className="text-3xl font-bold text-white mb-2">GutGuard</h1>
-          <p className="text-gray-400 text-lg">Your Digestive Health Companion</p>
+          <div className="text-center pb-20">
+            <h1 className="text-3xl font-bold mb-2 text-green-400">GutGuard</h1>
+            <p className="text-gray-400 text-lg">Your Digital Gut Health Companion</p>
+          </div>
         </div>
       </div>
     )
@@ -1922,4 +2120,8 @@ function getStoolDescription(type: number): string {
     default:
       return "Unknown stool type"
   }
+}
+
+function DevControls() {
+  return null
 }
