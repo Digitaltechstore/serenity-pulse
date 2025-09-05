@@ -1,18 +1,20 @@
 "use client"
 
 import React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export default function OnboardingFlow() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [authLoading, setAuthLoading] = useState(true)
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const router = useRouter()
-  const supabase = createClient()
+
+  const supabase = useMemo(() => createClient(), [])
 
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(0)
@@ -27,7 +29,7 @@ export default function OnboardingFlow() {
     confirmPassword: "",
   })
   const [authError, setAuthError] = useState<string | null>(null)
-  const [authLoading, setAuthLoading] = useState(false)
+  const [authFormLoading, setAuthFormLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     agreement: false,
@@ -58,21 +60,35 @@ export default function OnboardingFlow() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setIsAuthenticated(!!user)
-      if (!user) {
-        window.location.href = "/auth/login"
-        return
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+          setIsAuthenticated(true)
+        } else {
+          if (!window.location.pathname.startsWith("/auth/")) {
+            window.location.href = "/auth/login"
+            return
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error)
+        if (!window.location.pathname.startsWith("/auth/")) {
+          window.location.href = "/auth/login"
+        }
+      } finally {
+        setAuthLoading(false)
       }
     }
+
     checkAuth()
-  }, [])
+  }, [supabase])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setAuthLoading(true)
+    setAuthFormLoading(true)
     setAuthError(null)
 
     try {
@@ -87,18 +103,18 @@ export default function OnboardingFlow() {
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
-      setAuthLoading(false)
+      setAuthFormLoading(false)
     }
   }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    setAuthLoading(true)
+    setAuthFormLoading(true)
     setAuthError(null)
 
     if (authData.password !== authData.confirmPassword) {
       setAuthError("Passwords do not match")
-      setAuthLoading(false)
+      setAuthFormLoading(false)
       return
     }
 
@@ -118,7 +134,7 @@ export default function OnboardingFlow() {
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
-      setAuthLoading(false)
+      setAuthFormLoading(false)
     }
   }
 
@@ -203,12 +219,23 @@ export default function OnboardingFlow() {
     }
   }, [isAuthenticated, showSplash])
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Checking authentication...</p>
+          <p className="text-gray-400">Redirecting to login...</p>
         </div>
       </div>
     )
