@@ -1,10 +1,11 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect, useRef, useMemo } from "react"
+import type React from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export default function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0)
@@ -17,8 +18,10 @@ export default function OnboardingFlow() {
   const supabase = useMemo(() => createClient(), [])
 
   const [showSplash, setShowSplash] = useState(true)
+
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [authLoading, setAuthLoading] = useState(true)
+  const router = useRouter()
 
   const [authData, setAuthData] = useState({
     name: "",
@@ -66,16 +69,16 @@ export default function OnboardingFlow() {
         if (user) {
           setIsAuthenticated(true)
         } else {
-          if (!window.location.pathname.startsWith("/auth/")) {
-            // window.location.href = "/auth/login"
-            // return
-          }
+          // if (!window.location.pathname.startsWith("/auth/")) {
+          //   window.location.href = "/auth/login"
+          //   return
+          // }
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        if (!window.location.pathname.startsWith("/auth/")) {
-          // window.location.href = "/auth/login"
-        }
+        // if (!window.location.pathname.startsWith("/auth/")) {
+        //   window.location.href = "/auth/login"
+        // }
       } finally {
         setAuthLoading(false)
       }
@@ -95,8 +98,9 @@ export default function OnboardingFlow() {
         password: authData.password,
       })
       if (error) throw error
+      setIsAuthenticated(true)
       setShowAuth(false)
-      setShowDashboard(true)
+      setShowSplash(true)
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -120,14 +124,14 @@ export default function OnboardingFlow() {
         email: authData.email,
         password: authData.password,
         options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
           data: {
             name: authData.name,
           },
         },
       })
       if (error) throw error
-      setShowAuth(false)
-      setShowDashboard(true)
+      setAuthError("Please check your email to confirm your account")
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -182,7 +186,11 @@ export default function OnboardingFlow() {
 
   const startDashboard = () => {
     setShowAuth(true)
-    setAuthMode("login")
+  }
+
+  const handleAuthSuccess = () => {
+    setShowAuth(false)
+    setShowDashboard(true)
   }
 
   const switchTab = (tab: string) => setDashboardTab(tab)
@@ -307,106 +315,16 @@ export default function OnboardingFlow() {
               {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
             </h1>
             <p className="text-gray-400 mt-2">
-              {authMode === "login"
-                ? "Sign in to access your gut health dashboard"
+              {authMode === "login" 
+                ? "Sign in to access your gut health dashboard" 
                 : "Create your account to start your gut health journey"}
             </p>
           </div>
 
-          <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="space-y-6">
-            {authMode === "signup" && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={authData.name}
-                  onChange={(e) => updateAuthData("name", e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={authData.email}
-                onChange={(e) => updateAuthData("email", e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={authData.password}
-                onChange={(e) => updateAuthData("password", e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder={authMode === "login" ? "Enter your password" : "Create a password"}
-                required
-              />
-            </div>
-
-            {authMode === "signup" && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={authData.confirmPassword}
-                  onChange={(e) => updateAuthData("confirmPassword", e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Confirm your password"
-                  required
-                />
-              </div>
-            )}
-
-            {authError && (
-              <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
-            )}
-
-            <button
-              type="submit"
-              disabled={authFormLoading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
-            >
-              {authFormLoading
-                ? authMode === "login"
-                  ? "Signing In..."
-                  : "Creating Account..."
-                : authMode === "login"
-                  ? "Sign In"
-                  : "Create Account"}
-            </button>
-          </form>
-
-          {authMode === "login" && (
-            <div className="mt-4 text-center">
-              <button onClick={handleForgotPassword} className="text-green-400 hover:text-green-300 text-sm">
-                Forgot Password?
-              </button>
-            </div>
+          {authMode === "login" ? (
+            <LoginForm onSuccess={handleAuthSuccess} />
+          ) : (
+            <SignupForm onSuccess={handleAuthSuccess} />
           )}
 
           <div className="mt-8 text-center">
@@ -532,22 +450,22 @@ export default function OnboardingFlow() {
           )}
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 }
 
-function DashboardScreen() {
+function DashboardScreen() {\
   const [selectedTip, setSelectedTip] = useState<string | null>(null)
   const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
 
-  const calculateHealthStatus = () => {
+  const calculateHealthStatus = () => {\
     const today = new Date().toISOString().split("T")[0]
     const todayLog = savedLogs[today]
 
-    let colonHealth = { status: "No Data", color: "gray", icon: "❓" }
-    let digestiveHealth = { status: "No Data", color: "gray", icon: "❓" }
+    let colonHealth = { status: "No Data\", color: "gray", icon: "❓" }
+    let digestiveHealth = { status: "No Data\", color: "gray", icon: "❓" }
 
-    if (todayLog && todayLog.logData) {
+    if (todayLog && todayLog.logData) {\
       const { stoolType, symptoms, stressLevel } = todayLog.logData
 
       // Calculate colon health based on stool type
@@ -563,9 +481,9 @@ function DashboardScreen() {
       // Calculate digestive health based on symptoms
       const symptomTotal = Object.values(symptoms).reduce((sum: number, val: any) => sum + val, 0)
       const avgSymptoms = symptomTotal / Object.keys(symptoms).length
-
+\
       if (avgSymptoms <= 2 && stressLevel <= 5) {
-        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }
+        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }\
       } else if (avgSymptoms <= 4 && stressLevel <= 7) {
         digestiveHealth = { status: "Good", color: "yellow", icon: "⚠️" }
       } else {
@@ -577,7 +495,7 @@ function DashboardScreen() {
   }
 
   React.useEffect(() => {
-    // In a real app, this would load from database/localStorage
+    // In a real app, this would load from database/localStorage\
     const storedLogs = localStorage.getItem("gutguard-logs")
     if (storedLogs) {
       setSavedLogs(JSON.parse(storedLogs))
@@ -587,25 +505,25 @@ function DashboardScreen() {
   const wellnessTips = [
     {
       id: "hydration",
-      title: "Stay Hydrated",
+      title: \"Stay Hydrated",
       description: "Drink 8-10 glasses of water daily to support digestion",
       icon: "💧",
     },
     {
       id: "fiber",
-      title: "Increase Fiber Gradually",
+      title: \"Increase Fiber Gradually",
       description: "Add 5g of fiber weekly to avoid digestive discomfort",
       icon: "🌾",
     },
     {
       id: "probiotics",
-      title: "Include Probiotics",
+      title: \"Include Probiotics",
       description: "Yogurt, kefir, and fermented foods support gut bacteria",
       icon: "🦠",
     },
     {
       id: "mindful",
-      title: "Eat Mindfully",
+      title: \"Eat Mindfully",
       description: "Chew slowly and avoid eating when stressed",
       icon: "🧘",
     },
@@ -759,13 +677,13 @@ function DashboardScreen() {
   )
 }
 
-function ScanScreen() {
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+function ScanScreen() {\
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)\
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)\
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<{
     food: string
-    confidence: number
+    confidence: number\
     suitable: boolean
     reason: string
   } | null>(null)
@@ -773,9 +691,9 @@ function ScanScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const startCamera = async () => {
-    try {
+    try {\
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera API not supported in this browser")
+        throw new Error(\"Camera API not supported in this browser")
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices()
@@ -784,7 +702,7 @@ function ScanScreen() {
       if (videoDevices.length === 0) {
         throw new Error("No camera devices found")
       }
-
+\
       let stream: MediaStream | null = null
 
       try {
@@ -796,14 +714,14 @@ function ScanScreen() {
           },
         })
       } catch (envError) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
+        try {\
+          stream = await navigator.mediaDevices.getUserMedia({\
             video: {
-              facingMode: "user",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              facingMode: "user",\
+              width: { ideal: 1280 },\
+              height: { ideal: 720 },\
             },
-          })
+          })\
         } catch (userError) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -816,13 +734,13 @@ function ScanScreen() {
 
       if (stream) {
         setCameraStream(stream)
-        if (videoRef.current) {
+        if (videoRef.current) {\
           videoRef.current.srcObject = stream
-        }
-      }
+        }\
+      }\
     } catch (error: any) {
       let errorMessage = "Camera access failed. "
-
+\
       if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
         errorMessage += "No camera device found."
       } else if (error.name === "NotAllowedError") {
@@ -838,7 +756,7 @@ function ScanScreen() {
   }
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current) {\
       const canvas = canvasRef.current
       const video = videoRef.current
       const context = canvas.getContext("2d")
@@ -1940,7 +1858,7 @@ function AdviceScreen() {
 
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           context: "User is asking about gut health and digestive wellness",
@@ -2013,7 +1931,7 @@ function AdviceScreen() {
           <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className="flex items-start gap-3 max-w-[85%]">
               {message.role === "assistant" && (
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                   </svg>
@@ -2178,4 +2096,157 @@ function getStoolDescription(type: number): string {
 
 function DevControls() {
   return null
+}
+
+function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [formData, setFormData] = useState({ email: "", password: "" })
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const supabase = useMemo(() => createClient(), [])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
+      if (error) throw error
+      onSuccess()
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleLogin} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+        <input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+        <input
+          type="password"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      {error && <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{error}</div>}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl"
+      >
+        {loading ? "Signing In..." : "Sign In"}
+      </button>
+    </form>
+  )
+}
+
+function SignupForm({ onSuccess }: { onSuccess: () => void }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const supabase = useMemo(() => createClient(), [])
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: { name: formData.name },
+          emailRedirectTo: undefined,
+        },
+      })
+      if (error) throw error
+      onSuccess()
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSignup} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+        <input
+          type="text"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+        <input
+          type="email"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+        <input
+          type="password"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+        <input
+          type="password"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+      {error && <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{error}</div>}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl"
+      >
+        {loading ? "Creating Account..." : "Create Account"}
+      </button>
+    </form>
+  )
 }
