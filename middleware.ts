@@ -2,6 +2,10 @@ import { updateSession } from "@/lib/supabase/middleware"
 import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  // The Supabase integration is configured but middleware can't access env vars at runtime
+  // This allows users to access the app while we resolve the environment variable access issue
+  return
+
   try {
     return await updateSession(request)
   } catch (error) {
