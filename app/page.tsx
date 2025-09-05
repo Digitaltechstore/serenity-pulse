@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Camera, Calendar } from "lucide-react"
+import { ArrowLeft, Camera } from "lucide-react"
 
 export default function OnboardingFlow() {
   const [showSplash, setShowSplash] = useState(true)
@@ -634,24 +634,510 @@ function ScanScreen() {
 }
 
 function LogScreen() {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [logData, setLogData] = useState({
+    stoolType: "",
+    stoolFrequency: 1,
+    stoolNotes: "",
+    stoolColor: "brown",
+    pencilThin: false,
+    mucus: false,
+    blood: false,
+    symptoms: {
+      bloating: 0,
+      abdominalPain: 0,
+      gas: 0,
+      nausea: 0,
+      fatigue: 0,
+    },
+    meals: [] as Array<{ id: string; name: string; time: string; tag: "safe" | "trigger" | "unsure" }>,
+    waterIntake: 0,
+    sleepHours: 8,
+    stressLevel: 5,
+    dailyNotes: "",
+    attachedImage: null as string | null,
+  })
+  const [activeSection, setActiveSection] = useState("stool")
+  const [showTrends, setShowTrends] = useState(false)
+
+  const bristolTypes = [
+    { type: 1, description: "Separate hard lumps", icon: "🟤", severity: "severe" },
+    { type: 2, description: "Lumpy and sausage like", icon: "🟫", severity: "moderate" },
+    { type: 3, description: "A sausage shape with cracks in the surface", icon: "🤎", severity: "normal" },
+    { type: 4, description: "Like a smooth, soft sausage or snake", icon: "🟤", severity: "normal" },
+    { type: 5, description: "Soft blobs with clear-cut edges", icon: "🟫", severity: "mild" },
+    { type: 6, description: "Mushy consistency with ragged edges", icon: "🤎", severity: "moderate" },
+    { type: 7, description: "Liquid consistency with no solid pieces", icon: "🟤", severity: "severe" },
+  ]
+
+  const updateLogData = (field: string, value: any) => {
+    setLogData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const updateSymptom = (symptom: string, value: number) => {
+    setLogData((prev) => ({
+      ...prev,
+      symptoms: { ...prev.symptoms, [symptom]: value },
+    }))
+  }
+
+  const addMeal = () => {
+    const mealName = prompt("Enter meal/food name:")
+    if (mealName) {
+      const newMeal = {
+        id: Date.now().toString(),
+        name: mealName,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        tag: "unsure" as const,
+      }
+      setLogData((prev) => ({
+        ...prev,
+        meals: [...prev.meals, newMeal],
+      }))
+    }
+  }
+
+  const updateMealTag = (mealId: string, tag: "safe" | "trigger" | "unsure") => {
+    setLogData((prev) => ({
+      ...prev,
+      meals: prev.meals.map((meal) => (meal.id === mealId ? { ...meal, tag } : meal)),
+    }))
+  }
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        updateLogData("attachedImage", e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const saveLogEntry = () => {
+    // In a real app, this would save to database
+    alert("Log entry saved successfully!")
+  }
+
   return (
-    <div className="p-6">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-medium">Log</h1>
-        <div className="ml-auto">
-          <Calendar className="h-5 w-5 text-gray-400" />
+    <div className="min-h-screen bg-gray-900 text-white pb-24">
+      {/* Header */}
+      <div className="sticky top-0 bg-gray-900 border-b border-gray-700 px-6 py-4 z-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Gut Health Log</h1>
+          <div className="flex items-center gap-3">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white"
+            />
+            <Button
+              onClick={() => setShowTrends(!showTrends)}
+              variant="ghost"
+              size="sm"
+              className="text-green-400 hover:bg-gray-800"
+            >
+              📊
+            </Button>
+          </div>
+        </div>
+
+        {/* Section Navigation */}
+        <div className="flex gap-2 mt-4 overflow-x-auto">
+          {[
+            { id: "stool", label: "Stool", icon: "🚽" },
+            { id: "symptoms", label: "Symptoms", icon: "🤒" },
+            { id: "food", label: "Food", icon: "🍽️" },
+            { id: "lifestyle", label: "Lifestyle", icon: "💧" },
+            { id: "notes", label: "Notes", icon: "📝" },
+          ].map((section) => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === section.id ? "bg-green-500 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              <span>{section.icon}</span>
+              {section.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="bg-gray-800 rounded-xl p-4">
-          <h2 className="text-lg font-semibold mb-4">Daily Health Log</h2>
-          <p className="text-gray-400">Track your symptoms, stool patterns, and wellness metrics here.</p>
+      {showTrends ? (
+        /* Trends View */
+        <div className="p-6 space-y-6">
+          <div className="bg-gradient-to-r from-green-900/50 to-teal-900/50 rounded-xl p-6 border border-green-800/30">
+            <h2 className="text-lg font-semibold mb-4 text-green-300">Weekly Summary</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-400">4.2</div>
+                <div className="text-sm text-gray-300">Avg Stool Type</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-400">1.8</div>
+                <div className="text-sm text-gray-300">Daily Frequency</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-yellow-400">3.2</div>
+                <div className="text-sm text-gray-300">Avg Symptoms</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-purple-400">2.1L</div>
+                <div className="text-sm text-gray-300">Daily Water</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h3 className="font-semibold mb-4">Symptom Trends (7 days)</h3>
+            <div className="space-y-3">
+              {Object.entries(logData.symptoms).map(([symptom, value]) => (
+                <div key={symptom} className="flex items-center justify-between">
+                  <span className="capitalize text-sm">{symptom}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-green-500 to-red-500 rounded-full"
+                        style={{ width: `${(value / 10) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-400 w-8">{value}/10</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-gray-800 rounded-xl p-6">
+            <h3 className="font-semibold mb-4">Top Food Triggers</h3>
+            <div className="space-y-2">
+              {["Spicy foods", "Dairy products", "High fiber foods"].map((food, index) => (
+                <div key={food} className="flex items-center justify-between py-2">
+                  <span className="text-sm">{food}</span>
+                  <span className="text-xs bg-red-900/50 text-red-300 px-2 py-1 rounded-full">
+                    {3 - index} triggers
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Daily Log View */
+        <div className="p-6 space-y-6">
+          {/* Stool Tracker */}
+          {activeSection === "stool" && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl p-6 border border-amber-800/30">
+                <h2 className="text-lg font-semibold mb-4 text-amber-300">Bristol Stool Chart</h2>
+                <div className="grid grid-cols-1 gap-3">
+                  {bristolTypes.map((type) => (
+                    <button
+                      key={type.type}
+                      onClick={() => updateLogData("stoolType", type.type.toString())}
+                      className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                        logData.stoolType === type.type.toString()
+                          ? "border-amber-500 bg-amber-500/20"
+                          : "border-gray-600 bg-gray-800 hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="text-2xl">{type.icon}</div>
+                      <div className="text-left flex-1">
+                        <div className="font-medium">Type {type.type}</div>
+                        <div className="text-sm text-gray-400">{type.description}</div>
+                      </div>
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          type.severity === "normal"
+                            ? "bg-green-900/50 text-green-300"
+                            : type.severity === "mild"
+                              ? "bg-yellow-900/50 text-yellow-300"
+                              : "bg-red-900/50 text-red-300"
+                        }`}
+                      >
+                        {type.severity}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Frequency Today</label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={logData.stoolFrequency}
+                        onChange={(e) => updateLogData("stoolFrequency", Number.parseInt(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-lg font-semibold w-8">{logData.stoolFrequency}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { key: "pencilThin", label: "Pencil-thin", icon: "📏" },
+                      { key: "mucus", label: "Mucus", icon: "🫧" },
+                      { key: "blood", label: "Blood", icon: "🩸" },
+                    ].map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => updateLogData(option.key, !logData[option.key as keyof typeof logData])}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                          logData[option.key as keyof typeof logData]
+                            ? "border-red-500 bg-red-500/20 text-red-300"
+                            : "border-gray-600 bg-gray-800 hover:border-gray-500"
+                        }`}
+                      >
+                        <span className="text-xl">{option.icon}</span>
+                        <span className="text-sm font-medium">{option.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Additional Notes</label>
+                    <textarea
+                      value={logData.stoolNotes}
+                      onChange={(e) => updateLogData("stoolNotes", e.target.value)}
+                      placeholder="Color, consistency, any other observations..."
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Symptom Log */}
+          {activeSection === "symptoms" && (
+            <div className="bg-gradient-to-r from-red-900/30 to-pink-900/30 rounded-xl p-6 border border-red-800/30">
+              <h2 className="text-lg font-semibold mb-4 text-red-300">Symptom Severity (0-10)</h2>
+              <div className="space-y-6">
+                {Object.entries(logData.symptoms).map(([symptom, value]) => (
+                  <div key={symptom} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="capitalize font-medium">{symptom.replace(/([A-Z])/g, " $1")}</label>
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          value === 0
+                            ? "bg-green-900/50 text-green-300"
+                            : value <= 3
+                              ? "bg-yellow-900/50 text-yellow-300"
+                              : value <= 6
+                                ? "bg-orange-900/50 text-orange-300"
+                                : "bg-red-900/50 text-red-300"
+                        }`}
+                      >
+                        {value}/10
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm text-gray-400">None</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="10"
+                        value={value}
+                        onChange={(e) => updateSymptom(symptom, Number.parseInt(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm text-gray-400">Severe</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Food Journal */}
+          {activeSection === "food" && (
+            <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-800/30">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-green-300">Food & Drink Journal</h2>
+                <Button onClick={addMeal} className="bg-green-600 hover:bg-green-700 text-white">
+                  + Add Meal
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {logData.meals.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <span className="text-4xl mb-2 block">🍽️</span>
+                    <p>No meals logged today</p>
+                    <p className="text-sm">Tap "Add Meal" to start tracking</p>
+                  </div>
+                ) : (
+                  logData.meals.map((meal) => (
+                    <div key={meal.id} className="bg-gray-800 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-medium">{meal.name}</h3>
+                          <p className="text-sm text-gray-400">{meal.time}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {(["safe", "trigger", "unsure"] as const).map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => updateMealTag(meal.id, tag)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                              meal.tag === tag
+                                ? tag === "safe"
+                                  ? "bg-green-500 text-white"
+                                  : tag === "trigger"
+                                    ? "bg-red-500 text-white"
+                                    : "bg-yellow-500 text-black"
+                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                            }`}
+                          >
+                            {tag === "safe" ? "✅ Safe" : tag === "trigger" ? "⚠️ Trigger" : "❓ Unsure"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Lifestyle */}
+          {activeSection === "lifestyle" && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl p-6 border border-blue-800/30">
+                <h2 className="text-lg font-semibold mb-4 text-blue-300">Hydration & Lifestyle</h2>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Water Intake (glasses)</label>
+                    <div className="flex items-center gap-4">
+                      <div className="flex gap-2 flex-wrap">
+                        {[...Array(12)].map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => updateLogData("waterIntake", i + 1)}
+                            className={`w-8 h-8 rounded-full border-2 transition-all ${
+                              i < logData.waterIntake
+                                ? "border-blue-500 bg-blue-500 text-white"
+                                : "border-gray-600 bg-gray-800 hover:border-blue-400"
+                            }`}
+                          >
+                            💧
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-lg font-semibold">{logData.waterIntake}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Sleep Hours: {logData.sleepHours}h</label>
+                    <input
+                      type="range"
+                      min="4"
+                      max="12"
+                      step="0.5"
+                      value={logData.sleepHours}
+                      onChange={(e) => updateLogData("sleepHours", Number.parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>4h</span>
+                      <span>12h</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Stress Level: {logData.stressLevel}/10</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={logData.stressLevel}
+                      onChange={(e) => updateLogData("stressLevel", Number.parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>😌 Relaxed</span>
+                      <span>😰 Very Stressed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Daily Notes */}
+          {activeSection === "notes" && (
+            <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-xl p-6 border border-purple-800/30">
+              <h2 className="text-lg font-semibold mb-4 text-purple-300">Daily Notes & Photos</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Personal Observations</label>
+                  <textarea
+                    value={logData.dailyNotes}
+                    onChange={(e) => updateLogData("dailyNotes", e.target.value)}
+                    placeholder="How are you feeling today? Any patterns you've noticed?"
+                    className="w-full bg-gray-800 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-400 resize-none"
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Attach Photo (Optional)</label>
+                  <div className="flex gap-3">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <Button className="bg-gray-700 hover:bg-gray-600 text-white">📷 Add Photo</Button>
+                    </div>
+                    {logData.attachedImage && (
+                      <div className="relative">
+                        <img
+                          src={logData.attachedImage || "/placeholder.svg"}
+                          alt="Attached"
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                        <button
+                          onClick={() => updateLogData("attachedImage", null)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Photos are private and stored securely on your device</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Save Button */}
+          <div className="sticky bottom-24 bg-gray-900 pt-4">
+            <Button
+              onClick={saveLogEntry}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-semibold text-lg shadow-lg"
+            >
+              💾 Save Today's Log
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
