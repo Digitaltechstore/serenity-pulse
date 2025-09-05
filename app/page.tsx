@@ -665,76 +665,166 @@ function AdviceScreen() {
   ])
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim() || isLoading) return
 
-    const userMessage = { role: "user", content: inputMessage }
+    const userMessage = { role: "user", content: inputMessage.trim() }
     setMessages((prev) => [...prev, userMessage])
     setInputMessage("")
     setIsLoading(true)
 
     try {
+      console.log("[v0] Sending message to DeepSeek API:", userMessage)
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+          context: "User is asking about gut health and digestive wellness",
+        }),
       })
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("[v0] Received response from DeepSeek:", data)
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }])
     } catch (error) {
+      console.error("[v0] Chat error:", error)
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again later." },
+        {
+          role: "assistant",
+          content: "Sorry, I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+        },
       ])
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
   return (
-    <div className="p-6 h-screen flex flex-col">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-medium">AI Coach</h1>
+    <div className="flex flex-col h-full max-h-[calc(100vh-140px)]">
+      <div className="flex items-center gap-4 mb-6 px-6 pt-6">
+        <h1 className="text-xl font-semibold">AI Coach</h1>
+        <div className="ml-auto">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
+            <span className="text-lg">⚙️</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto mb-4">
+      <div className="px-6 mb-4">
+        <div className="flex gap-2 flex-wrap">
+          {["Flare plan (24-48h)", "Gentle 7-day plan", "Trigger hunt", "Doctor checklist"].map((action) => (
+            <Button
+              key={action}
+              variant="outline"
+              size="sm"
+              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 text-xs"
+              onClick={() => setInputMessage(action)}
+            >
+              {action}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 space-y-4 mb-4">
         {messages.map((message, index) => (
           <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.role === "user" ? "bg-green-500 text-white" : "bg-gray-800 text-white"
-              }`}
-            >
-              {message.content}
+            <div className="flex items-start gap-3 max-w-[80%]">
+              {message.role === "assistant" && (
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-white text-sm">🤖</span>
+                </div>
+              )}
+              <div
+                className={`px-4 py-3 rounded-2xl ${
+                  message.role === "user"
+                    ? "bg-green-500 text-white rounded-br-md"
+                    : "bg-gray-800 text-white rounded-bl-md"
+                }`}
+              >
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              </div>
+              {message.role === "user" && (
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-white text-sm">👤</span>
+                </div>
+              )}
             </div>
           </div>
         ))}
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-800 text-white px-4 py-2 rounded-lg">
-              <div className="animate-pulse">Thinking...</div>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-sm">🤖</span>
+              </div>
+              <div className="bg-gray-800 text-white px-4 py-3 rounded-2xl rounded-bl-md">
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                  <span className="text-sm">Thinking...</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-          placeholder="Ask about your gut health..."
-          className="flex-1 bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
-        />
-        <Button onClick={sendMessage} disabled={isLoading} className="bg-green-500 hover:bg-green-600">
-          Send
-        </Button>
+      <div className="px-6 pb-6">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <textarea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me about your gut health, symptoms, diet, or lifestyle..."
+              className="w-full bg-gray-800 text-white px-4 py-3 rounded-2xl border border-gray-600 focus:border-green-500 focus:outline-none resize-none min-h-[44px] max-h-32"
+              rows={1}
+              disabled={isLoading}
+            />
+          </div>
+          <Button
+            onClick={sendMessage}
+            disabled={isLoading || !inputMessage.trim()}
+            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed w-12 h-12 rounded-full flex items-center justify-center"
+          >
+            {isLoading ? (
+              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+            ) : (
+              <span className="text-lg">➤</span>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )
