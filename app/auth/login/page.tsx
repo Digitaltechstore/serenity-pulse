@@ -21,13 +21,21 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("[v0] Attempting login with email:", email)
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      if (error) throw error
+
+      if (error) {
+        console.error("[v0] Login error:", error)
+        throw error
+      }
+
+      console.log("[v0] Login successful, redirecting to main app")
       router.push("/")
     } catch (error: any) {
+      console.error("[v0] Login failed:", error.message)
       setError(error.message)
     } finally {
       setLoading(false)

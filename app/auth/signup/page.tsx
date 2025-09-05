@@ -37,7 +37,8 @@ export default function SignupPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("[v0] Attempting signup with email:", formData.email)
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -46,11 +47,17 @@ export default function SignupPage() {
           },
         },
       })
-      if (error) throw error
 
+      if (error) {
+        console.error("[v0] Signup error:", error)
+        throw error
+      }
+
+      console.log("[v0] Signup successful, redirecting to login")
       alert("Check your email for the confirmation link!")
       router.push("/auth/login")
     } catch (error: any) {
+      console.error("[v0] Signup failed:", error.message)
       setError(error.message)
     } finally {
       setLoading(false)
