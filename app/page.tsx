@@ -285,90 +285,162 @@ export default function OnboardingFlow() {
 }
 
 function DashboardScreen() {
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case "symptom-check":
-        alert("Quick Symptom Check feature coming soon!")
-        break
-      case "stool-log":
-        alert("Stool Log feature coming soon!")
-        break
-      case "food-scan":
-        alert("Food Scan feature coming soon!")
-        break
-      case "daily-goals":
-        alert("Daily Goals feature coming soon!")
-        break
-    }
-  }
+  const [selectedTip, setSelectedTip] = useState<string | null>(null)
+
+  const wellnessTips = [
+    {
+      id: "hydration",
+      title: "Stay Hydrated",
+      description: "Drink 8-10 glasses of water daily to support digestion",
+      icon: "💧",
+    },
+    {
+      id: "fiber",
+      title: "Increase Fiber Gradually",
+      description: "Add 5g of fiber weekly to avoid digestive discomfort",
+      icon: "🌾",
+    },
+    {
+      id: "probiotics",
+      title: "Include Probiotics",
+      description: "Yogurt, kefir, and fermented foods support gut bacteria",
+      icon: "🦠",
+    },
+    {
+      id: "mindful",
+      title: "Eat Mindfully",
+      description: "Chew slowly and avoid eating when stressed",
+      icon: "🧘",
+    },
+  ]
+
+  const foodsToEat = [
+    "Leafy greens (spinach, kale)",
+    "Fermented foods (yogurt, kimchi)",
+    "Whole grains (oats, quinoa)",
+    "Lean proteins (fish, chicken)",
+    "Bananas and berries",
+    "Ginger and turmeric",
+  ]
+
+  const foodsToAvoid = [
+    "Processed foods",
+    "Excessive sugar",
+    "Fried and fatty foods",
+    "Artificial sweeteners",
+    "Excessive caffeine",
+    "Spicy foods (if sensitive)",
+  ]
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">GutGuard</h1>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-white">Wellness Hub</h1>
         <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
           <span className="text-lg">⚙️</span>
         </Button>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Today's Risk</h2>
-          <div className="space-y-3">
-            <div className="bg-red-100 p-4 rounded-xl flex items-center justify-between">
+      {/* Today's Risk Assessment */}
+      <div className="bg-gray-800 rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-white mb-3">Today's Health Status</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-green-100 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-gray-900 font-medium">Colon</h3>
-                <p className="text-gray-700 font-semibold">Low</p>
-                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
+                <h3 className="text-gray-900 font-medium text-sm">Colon Health</h3>
+                <p className="text-green-700 font-semibold text-xs">Good</p>
               </div>
-              <div className="w-16 h-16 bg-red-200 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🫁</span>
-              </div>
+              <span className="text-lg">✅</span>
             </div>
-
-            <div className="bg-teal-100 p-4 rounded-xl flex items-center justify-between">
+          </div>
+          <div className="bg-yellow-100 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-gray-900 font-medium">Stomach</h3>
-                <p className="text-gray-700 font-semibold">Medium</p>
-                <button className="text-gray-600 text-xs underline hover:text-gray-800">Why?</button>
+                <h3 className="text-gray-900 font-medium text-sm">Digestive Health</h3>
+                <p className="text-yellow-700 font-semibold text-xs">Monitor</p>
               </div>
-              <div className="w-16 h-16 bg-teal-200 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🫃</span>
-              </div>
+              <span className="text-lg">⚠️</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { title: "Quick Symptom Check", subtitle: "Start", action: "symptom-check", bg: "bg-orange-100" },
-              {
-                title: "Stool Log",
-                subtitle: "Bristol • pencil-thin toggle",
-                action: "stool-log",
-                bg: "bg-yellow-100",
-              },
-              { title: "Food Scan", subtitle: "Open Camera / Upload", action: "food-scan", bg: "bg-blue-100" },
-              {
-                title: "Daily Goals",
-                subtitle: "Hydration ring, fiber goal, steps",
-                action: "daily-goals",
-                bg: "bg-green-100",
-              },
-            ].map((action, index) => (
-              <button
-                key={index}
-                className={`${action.bg} p-4 rounded-xl flex flex-col justify-between h-24 hover:opacity-80 transition-opacity`}
-                onClick={() => handleQuickAction(action.action)}
-              >
-                <div className="text-left">
-                  <h3 className="text-gray-900 font-medium text-sm">{action.title}</h3>
-                  <p className="text-gray-600 text-xs mt-1">{action.subtitle}</p>
-                </div>
-              </button>
+      {/* Daily Wellness Tips */}
+      <div className="bg-gray-800 rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-white mb-3">Daily Wellness Tips</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {wellnessTips.map((tip) => (
+            <button
+              key={tip.id}
+              className="bg-blue-100 p-3 rounded-lg text-left hover:bg-blue-200 transition-colors"
+              onClick={() => setSelectedTip(selectedTip === tip.id ? null : tip.id)}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm">{tip.icon}</span>
+                <h3 className="text-gray-900 font-medium text-xs">{tip.title}</h3>
+              </div>
+              {selectedTip === tip.id && <p className="text-gray-700 text-xs mt-1">{tip.description}</p>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Food Guidance */}
+      <div className="grid grid-cols-1 gap-4">
+        <div className="bg-gray-800 rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <span className="text-green-400">🥗</span>
+            Foods to Include
+          </h2>
+          <div className="space-y-2">
+            {foodsToEat.map((food, index) => (
+              <div key={index} className="bg-green-100 p-2 rounded-lg">
+                <p className="text-gray-900 text-sm flex items-center gap-2">
+                  <span className="text-green-600">✓</span>
+                  {food}
+                </p>
+              </div>
             ))}
+          </div>
+        </div>
+
+        <div className="bg-gray-800 rounded-xl p-4">
+          <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+            <span className="text-red-400">🚫</span>
+            Foods to Limit
+          </h2>
+          <div className="space-y-2">
+            {foodsToAvoid.map((food, index) => (
+              <div key={index} className="bg-red-100 p-2 rounded-lg">
+                <p className="text-gray-900 text-sm flex items-center gap-2">
+                  <span className="text-red-600">✗</span>
+                  {food}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Food Discipline Tips */}
+      <div className="bg-gray-800 rounded-xl p-4">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <span className="text-purple-400">🎯</span>
+          Food Discipline Tips
+        </h2>
+        <div className="space-y-3">
+          <div className="bg-purple-100 p-3 rounded-lg">
+            <h3 className="text-gray-900 font-medium text-sm mb-1">Meal Timing</h3>
+            <p className="text-gray-700 text-xs">Eat at regular intervals, avoid late-night meals</p>
+          </div>
+          <div className="bg-purple-100 p-3 rounded-lg">
+            <h3 className="text-gray-900 font-medium text-sm mb-1">Portion Control</h3>
+            <p className="text-gray-700 text-xs">Use smaller plates, eat slowly to recognize fullness</p>
+          </div>
+          <div className="bg-purple-100 p-3 rounded-lg">
+            <h3 className="text-gray-900 font-medium text-sm mb-1">Food Journal</h3>
+            <p className="text-gray-700 text-xs">Track what you eat to identify trigger foods</p>
           </div>
         </div>
       </div>
