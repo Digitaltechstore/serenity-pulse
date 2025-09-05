@@ -1413,44 +1413,53 @@ function LogScreen() {
 
           {/* Symptom Log - Step 1 */}
           {currentStep === 1 && (
-            <div className="bg-gradient-to-r from-red-900/30 to-pink-900/30 rounded-xl p-6 border border-red-800/30">
-              <h2 className="text-lg font-semibold mb-4 text-red-300">Symptom Severity (0-10)</h2>
-              <div className="space-y-6">
-                {Object.entries(logData.symptoms).map(([symptom, value]) => (
-                  <div key={symptom} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="capitalize font-medium">{symptom.replace(/([A-Z])/g, " $1")}</label>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          value === 0
-                            ? "bg-green-900/50 text-green-300"
-                            : value <= 3
-                              ? "bg-yellow-900/50 text-yellow-300"
-                              : value <= 6
-                                ? "bg-orange-900/50 text-orange-300"
-                                : "bg-red-900/50 text-red-300"
-                        }`}
-                      >
-                        {value}/10
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-gray-400">None</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        value={value}
-                        onChange={(e) => updateSymptom(symptom, Number.parseInt(e.target.value))}
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-gray-400">Severe</span>
+            <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-800">Bristol Stool Chart</h3>
+            <p className="text-sm text-gray-600">Select the type that best matches your stool today:</p>
+            
+            <div className="grid grid-cols-1 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setLogData({ ...logData, stoolType: type })}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    logData.stoolType === type
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{getStoolIcon(type)}</span>
+                    <div>
+                      <div className="font-medium">Type {type}</div>
+                      <div className="text-sm text-gray-600">{getStoolDescription(type)}</div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </button>
+              ))}
             </div>
-          )}
+
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Additional Notes (Optional)
+              </label>
+              <textarea
+                value={logData.stoolNotes}
+                onChange={(e) => setLogData({ ...logData, stoolNotes: e.target.value })}
+                placeholder="Any additional observations about your stool..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                rows={3}
+              />
+            </div>
+
+            <button
+              onClick={() => setCurrentStep(2)}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
+            >
+              Next: Symptoms
+            </button>
+          </div>
+        )}
 
           {/* Food Journal - Step 2 */}
           {currentStep === 2 && (
@@ -1872,4 +1881,30 @@ function SettingsScreen() {
       </div>
     </div>
   )
+}
+
+function getStoolIcon(type: number): string {
+  switch (type) {
+    case 1: return "💩";
+    case 2: return "🪵";
+    case 3: return "🧱";
+    case 4: return "🐍";
+    case 5: return "💧";
+    case 6: return "🍧";
+    case 7: return "🌊";
+    default: return "❓";
+  }
+}
+
+function getStoolDescription(type: number): string {
+  switch (type) {
+    case 1: return "Separate hard lumps, like nuts (hard to pass)";
+    case 2: return "Sausage-shaped, but lumpy";
+    case 3: return "Like a sausage but with cracks on its surface";
+    case 4: return "Like a sausage or snake, smooth and soft";
+    case 5: return "Soft blobs with clear-cut edges (passed easily)";
+    case 6: return "Fluffy pieces with ragged edges, a mushy stool";
+    case 7: return "Watery, no solid pieces. (entirely liquid)";
+    default: return "Unknown stool type";
+  }
 }
