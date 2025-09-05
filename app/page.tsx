@@ -63,8 +63,8 @@ export default function OnboardingFlow() {
       } = await supabase.auth.getUser()
       setIsAuthenticated(!!user)
       if (!user) {
-        setShowAuth(true)
-        setShowSplash(false)
+        window.location.href = "/auth/login"
+        return
       }
     }
     checkAuth()
@@ -203,118 +203,12 @@ export default function OnboardingFlow() {
     }
   }, [isAuthenticated, showSplash])
 
-  if (showAuth && !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Logo"
-              className="w-24 h-24 mx-auto mb-4"
-            />
-            <h1 className="text-2xl font-bold text-green-400">GutGuard</h1>
-            <p className="text-gray-400">Your Digital Gut Health Companion</p>
-          </div>
-
-          <div className="bg-gray-800 rounded-xl p-6">
-            <div className="flex mb-6">
-              <button
-                onClick={() => setAuthMode("login")}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
-                  authMode === "login" ? "bg-green-500 text-white" : "text-gray-400"
-                }`}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => setAuthMode("signup")}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
-                  authMode === "signup" ? "bg-green-500 text-white" : "text-gray-400"
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-
-            <form onSubmit={authMode === "login" ? handleLogin : handleSignup}>
-              {authMode === "signup" && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Name</label>
-                  <input
-                    type="text"
-                    value={authData.name}
-                    onChange={(e) => updateAuthData("name", e.target.value)}
-                    className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
-                    placeholder="Enter your full name"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={authData.email}
-                  onChange={(e) => updateAuthData("email", e.target.value)}
-                  className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Password</label>
-                <input
-                  type="password"
-                  value={authData.password}
-                  onChange={(e) => updateAuthData("password", e.target.value)}
-                  className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-
-              {authMode === "signup" && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Confirm Password</label>
-                  <input
-                    type="password"
-                    value={authData.confirmPassword}
-                    onChange={(e) => updateAuthData("confirmPassword", e.target.value)}
-                    className="w-full p-3 bg-gray-700 rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none"
-                    placeholder="Confirm your password"
-                    required
-                  />
-                </div>
-              )}
-
-              {authError && (
-                <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm">
-                  {authError}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={authLoading}
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium"
-              >
-                {authLoading ? "Processing..." : authMode === "login" ? "Login" : "Sign Up"}
-              </Button>
-
-              {authMode === "login" && (
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  className="w-full mt-4 text-green-400 hover:text-green-300 text-sm underline"
-                >
-                  Forgot Password?
-                </button>
-              )}
-            </form>
-          </div>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Checking authentication...</p>
         </div>
       </div>
     )
