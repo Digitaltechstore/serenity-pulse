@@ -8,19 +8,16 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export default function OnboardingFlow() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [authLoading, setAuthLoading] = useState(true)
-  const [showAuth, setShowAuth] = useState(false)
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
-  const router = useRouter()
-
-  const supabase = useMemo(() => createClient(), [])
-
   const [showSplash, setShowSplash] = useState(true)
   const [currentStep, setCurrentStep] = useState(0)
   const [showDashboard, setShowDashboard] = useState(false)
   const [dashboardTab, setDashboardTab] = useState("dashboard")
   const [showDevControls, setShowDevControls] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+
+  const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
 
   const [authData, setAuthData] = useState({
     name: "",
@@ -58,10 +55,6 @@ export default function OnboardingFlow() {
     stressLevel: [5],
   })
 
-  useEffect(() => {
-    setAuthLoading(false)
-  }, [])
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setAuthFormLoading(true)
@@ -73,9 +66,8 @@ export default function OnboardingFlow() {
         password: authData.password,
       })
       if (error) throw error
-      setIsAuthenticated(true)
       setShowAuth(false)
-      setShowSplash(true)
+      setShowDashboard(true)
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -99,14 +91,12 @@ export default function OnboardingFlow() {
         email: authData.email,
         password: authData.password,
         options: {
-          data: {
-            name: authData.name,
-          },
-          emailRedirectTo: undefined, // No email confirmation
+          data: { name: authData.name },
+          emailRedirectTo: undefined, // No email confirmation needed
         },
       })
       if (error) throw error
-      setIsAuthenticated(true)
+      setShowAuth(false)
       setShowDashboard(true)
     } catch (error: any) {
       setAuthError(error.message)
@@ -160,60 +150,80 @@ export default function OnboardingFlow() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const startDashboard = () => setShowDashboard(true)
+  const startDashboard = () => {
+    setShowAuth(true)
+    setAuthMode("login")
+  }
+
   const switchTab = (tab: string) => setDashboardTab(tab)
 
   const resetToSplash = () => {
     setShowSplash(true)
     setShowDashboard(false)
+    setShowAuth(false)
     setCurrentStep(0)
   }
 
   const goToOnboarding = () => {
     setShowSplash(false)
     setShowDashboard(false)
+    setShowAuth(false)
     setCurrentStep(0)
   }
 
   const goToPaywall = () => {
     setShowSplash(false)
     setShowDashboard(false)
+    setShowAuth(false)
     setCurrentStep(10)
   }
 
   const goToDashboard = () => {
     setShowSplash(false)
+    setShowAuth(false)
     setShowDashboard(true)
     setDashboardTab("dashboard")
   }
 
   useEffect(() => {
-    if (isAuthenticated && showSplash) {
+    if (showSplash) {
       const timer = setTimeout(() => {
         setShowSplash(false)
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [isAuthenticated, showSplash])
+  }, [showSplash])
 
-  if (authLoading) {
+  if (showDevControls) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            onClick={() => setShowDevControls(!showDevControls)}
+            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+          >
+            Dev
+          </button>
+        )}
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Redirecting to login...</p>
-        </div>
+        {showDevControls && (
+          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+            <div className="flex flex-col gap-2">
+              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Splash
+              </button>
+              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Onboarding
+              </button>
+              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Paywall
+              </button>
+              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -307,11 +317,10 @@ export default function OnboardingFlow() {
     )
   }
 
-  if (currentStep === 10 && !isAuthenticated) {
+  if (showAuth) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <DevControls />
-        <div className="max-w-sm mx-auto">
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <img
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
@@ -322,73 +331,18 @@ export default function OnboardingFlow() {
               {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
             </h1>
             <p className="text-gray-400 mt-2">
-              {authMode === "login"
-                ? "Sign in to access your personalized gut health dashboard"
-                : "Create your account to start your gut health journey"}
+              {authMode === "login" ? "Sign in to access your dashboard" : "Create your account to continue"}
             </p>
           </div>
 
-          {authMode === "login" ? (
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={authData.email}
-                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={authData.password}
-                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-
-              {authError && (
-                <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
-              )}
-
-              <button
-                type="submit"
-                disabled={authFormLoading}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
-              >
-                {authFormLoading ? "Signing In..." : "Sign In"}
-              </button>
-
-              <div className="text-center">
-                <button type="button" className="text-green-400 hover:text-green-300 text-sm">
-                  Forgot Password?
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleSignup} className="space-y-6">
+          <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="space-y-6">
+            {authMode === "signup" && (
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
                   Full Name
                 </label>
                 <input
                   id="name"
-                  name="name"
                   type="text"
                   value={authData.name}
                   onChange={(e) => setAuthData({ ...authData, name: e.target.value })}
@@ -397,46 +351,45 @@ export default function OnboardingFlow() {
                   required
                 />
               </div>
+            )}
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={authData.email}
-                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={authData.email}
+                onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={authData.password}
-                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Create a password"
-                  required
-                />
-              </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={authData.password}
+                onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder={authMode === "login" ? "Enter your password" : "Create a password"}
+                required
+              />
+            </div>
 
+            {authMode === "signup" && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
                   Confirm Password
                 </label>
                 <input
                   id="confirmPassword"
-                  name="confirmPassword"
                   type="password"
                   value={authData.confirmPassword}
                   onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
@@ -445,20 +398,48 @@ export default function OnboardingFlow() {
                   required
                 />
               </div>
+            )}
 
-              {authError && (
-                <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
-              )}
+            {authError && (
+              <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
+            )}
 
+            <button
+              type="submit"
+              disabled={authFormLoading}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+            >
+              {authFormLoading
+                ? authMode === "login"
+                  ? "Signing In..."
+                  : "Creating Account..."
+                : authMode === "login"
+                  ? "Sign In"
+                  : "Create Account"}
+            </button>
+
+            {authMode === "login" && (
               <button
-                type="submit"
-                disabled={authFormLoading}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+                type="button"
+                onClick={async () => {
+                  if (!authData.email) {
+                    setAuthError("Please enter your email address first")
+                    return
+                  }
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(authData.email)
+                    if (error) throw error
+                    alert("Password reset email sent! Check your inbox.")
+                  } catch (error: any) {
+                    setAuthError(error.message)
+                  }
+                }}
+                className="w-full text-green-400 hover:text-green-300 text-sm underline"
               >
-                {authFormLoading ? "Creating Account..." : "Create Account"}
+                Forgot Password?
               </button>
-            </form>
-          )}
+            )}
+          </form>
 
           <div className="mt-8 text-center">
             <p className="text-gray-400">
