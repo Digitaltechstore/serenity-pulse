@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
@@ -286,6 +286,54 @@ export default function OnboardingFlow() {
 
 function DashboardScreen() {
   const [selectedTip, setSelectedTip] = useState<string | null>(null)
+  const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
+
+  const calculateHealthStatus = () => {
+    const today = new Date().toISOString().split("T")[0]
+    const todayLog = savedLogs[today]
+
+    // Default status if no log data
+    let colonHealth = { status: "No Data", color: "gray", icon: "❓" }
+    let digestiveHealth = { status: "No Data", color: "gray", icon: "❓" }
+
+    if (todayLog && todayLog.logData) {
+      const { stoolType, symptoms, stressLevel } = todayLog.logData
+
+      // Calculate colon health based on stool type
+      const stoolTypeNum = Number.parseInt(stoolType) || 0
+      if (stoolTypeNum === 3 || stoolTypeNum === 4) {
+        colonHealth = { status: "Excellent", color: "green", icon: "✅" }
+      } else if (stoolTypeNum === 2 || stoolTypeNum === 5) {
+        colonHealth = { status: "Good", color: "yellow", icon: "⚠️" }
+      } else if (stoolTypeNum === 1 || stoolTypeNum >= 6) {
+        colonHealth = { status: "Needs Attention", color: "red", icon: "🚨" }
+      }
+
+      // Calculate digestive health based on symptoms
+      const symptomTotal = Object.values(symptoms).reduce((sum: number, val: any) => sum + val, 0)
+      const avgSymptoms = symptomTotal / Object.keys(symptoms).length
+
+      if (avgSymptoms <= 2 && stressLevel <= 5) {
+        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }
+      } else if (avgSymptoms <= 4 && stressLevel <= 7) {
+        digestiveHealth = { status: "Good", color: "yellow", icon: "⚠️" }
+      } else {
+        digestiveHealth = { status: "Monitor", color: "red", icon: "🚨" }
+      }
+    }
+
+    return { colonHealth, digestiveHealth }
+  }
+
+  const { colonHealth, digestiveHealth } = calculateHealthStatus()
+
+  React.useEffect(() => {
+    // In a real app, this would load from database/localStorage
+    const storedLogs = localStorage.getItem("gutguard-logs")
+    if (storedLogs) {
+      setSavedLogs(JSON.parse(storedLogs))
+    }
+  }, [])
 
   const wellnessTips = [
     {
@@ -341,26 +389,38 @@ function DashboardScreen() {
         </Button>
       </div>
 
-      {/* Today's Risk Assessment */}
+      {/* Today's Health Status - Now Dynamic */}
       <div className="bg-gray-800 rounded-xl p-4">
         <h2 className="text-lg font-semibold text-white mb-3">Today's Health Status</h2>
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-green-100 p-3 rounded-lg">
+          <div
+            className={`${colonHealth.color === "green" ? "bg-green-100" : colonHealth.color === "yellow" ? "bg-yellow-100" : colonHealth.color === "red" ? "bg-red-100" : "bg-gray-100"} p-3 rounded-lg`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-gray-900 font-medium text-sm">Colon Health</h3>
-                <p className="text-green-700 font-semibold text-xs">Good</p>
+                <p
+                  className={`${colonHealth.color === "green" ? "text-green-700" : colonHealth.color === "yellow" ? "text-yellow-700" : colonHealth.color === "red" ? "text-red-700" : "text-gray-700"} font-semibold text-xs`}
+                >
+                  {colonHealth.status}
+                </p>
               </div>
-              <span className="text-lg">✅</span>
+              <span className="text-lg">{colonHealth.icon}</span>
             </div>
           </div>
-          <div className="bg-yellow-100 p-3 rounded-lg">
+          <div
+            className={`${digestiveHealth.color === "green" ? "bg-green-100" : digestiveHealth.color === "yellow" ? "bg-yellow-100" : digestiveHealth.color === "red" ? "bg-red-100" : "bg-gray-100"} p-3 rounded-lg`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-gray-900 font-medium text-sm">Digestive Health</h3>
-                <p className="text-yellow-700 font-semibold text-xs">Monitor</p>
+                <p
+                  className={`${digestiveHealth.color === "green" ? "text-green-700" : digestiveHealth.color === "yellow" ? "text-yellow-700" : digestiveHealth.color === "red" ? "text-red-700" : "text-gray-700"} font-semibold text-xs`}
+                >
+                  {digestiveHealth.status}
+                </p>
               </div>
-              <span className="text-lg">⚠️</span>
+              <span className="text-lg">{digestiveHealth.icon}</span>
             </div>
           </div>
         </div>
@@ -905,18 +965,22 @@ function LogScreen() {
   const saveLogEntry = () => {
     const summary = generateDailySummary()
     const logEntry = {
-      logData: { ...logData },
+      date: selectedDate,
+      logData,
       summary,
-      savedAt: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
     }
 
-    setSavedLogs((prev) => ({
-      ...prev,
+    const updatedLogs = {
+      ...savedLogs,
       [selectedDate]: logEntry,
-    }))
+    }
 
+    setSavedLogs(updatedLogs)
     setDailySummary(summary)
     setShowSummary(true)
+
+    localStorage.setItem("gutguard-logs", JSON.stringify(updatedLogs))
 
     // In a real app, this would save to database/localStorage
     console.log("[v0] Saved log entry for", selectedDate, logEntry)
