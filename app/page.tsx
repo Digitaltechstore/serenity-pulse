@@ -59,32 +59,8 @@ export default function OnboardingFlow() {
   })
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-
-        if (user) {
-          setIsAuthenticated(true)
-        } else {
-          if (!window.location.pathname.startsWith("/auth/")) {
-            window.location.href = "/auth/login"
-            return
-          }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-        if (!window.location.pathname.startsWith("/auth/")) {
-          window.location.href = "/auth/login"
-        }
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [supabase])
+    setAuthLoading(false)
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,14 +99,15 @@ export default function OnboardingFlow() {
         email: authData.email,
         password: authData.password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
           data: {
             name: authData.name,
           },
+          emailRedirectTo: undefined, // No email confirmation
         },
       })
       if (error) throw error
-      setAuthError("Please check your email to confirm your account")
+      setIsAuthenticated(true)
+      setShowDashboard(true)
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -324,6 +301,175 @@ export default function OnboardingFlow() {
                 <span>{tab.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentStep === 10 && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-6">
+        <DevControls />
+        <div className="max-w-sm mx-auto">
+          <div className="text-center mb-8">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+              alt="GutGuard Logo"
+              className="w-24 h-24 mx-auto mb-4"
+            />
+            <h1 className="text-3xl font-bold text-green-400">
+              {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
+            </h1>
+            <p className="text-gray-400 mt-2">
+              {authMode === "login"
+                ? "Sign in to access your personalized gut health dashboard"
+                : "Create your account to start your gut health journey"}
+            </p>
+          </div>
+
+          {authMode === "login" ? (
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={authData.email}
+                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={authData.password}
+                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+
+              {authError && (
+                <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={authFormLoading}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+              >
+                {authFormLoading ? "Signing In..." : "Sign In"}
+              </button>
+
+              <div className="text-center">
+                <button type="button" className="text-green-400 hover:text-green-300 text-sm">
+                  Forgot Password?
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSignup} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={authData.name}
+                  onChange={(e) => setAuthData({ ...authData, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={authData.email}
+                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={authData.password}
+                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={authData.confirmPassword}
+                  onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+
+              {authError && (
+                <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={authFormLoading}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+              >
+                {authFormLoading ? "Creating Account..." : "Create Account"}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-400">
+              {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                className="text-green-400 hover:text-green-300 font-semibold"
+              >
+                {authMode === "login" ? "Sign Up" : "Sign In"}
+              </button>
+            </p>
           </div>
         </div>
       </div>

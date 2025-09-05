@@ -45,7 +45,7 @@ export default function SignupPage() {
           data: {
             name: formData.name,
           },
-          emailRedirectTo: undefined, // Disable email confirmation
+          emailRedirectTo: undefined, // No email confirmation required
         },
       })
 
