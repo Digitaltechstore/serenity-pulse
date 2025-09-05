@@ -635,6 +635,10 @@ function ScanScreen() {
 
 function LogScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
+  const [showSummary, setShowSummary] = useState(false)
+  const [dailySummary, setDailySummary] = useState<any>(null)
+
   const [logData, setLogData] = useState({
     stoolType: "",
     stoolFrequency: 1,
@@ -660,6 +664,39 @@ function LogScreen() {
   const [activeSection, setActiveSection] = useState("stool")
   const [showTrends, setShowTrends] = useState(false)
 
+  useEffect(() => {
+    const savedData = savedLogs[selectedDate]
+    if (savedData) {
+      setLogData(savedData.logData)
+      setDailySummary(savedData.summary)
+    } else {
+      // Reset to default values for new date
+      setLogData({
+        stoolType: "",
+        stoolFrequency: 1,
+        stoolNotes: "",
+        stoolColor: "brown",
+        pencilThin: false,
+        mucus: false,
+        blood: false,
+        symptoms: {
+          bloating: 0,
+          abdominalPain: 0,
+          gas: 0,
+          nausea: 0,
+          fatigue: 0,
+        },
+        meals: [],
+        waterIntake: 0,
+        sleepHours: 8,
+        stressLevel: 5,
+        dailyNotes: "",
+        attachedImage: null,
+      })
+      setDailySummary(null)
+    }
+  }, [selectedDate, savedLogs])
+
   const bristolTypes = [
     { type: 1, description: "Separate hard lumps", icon: "🟤", severity: "severe" },
     { type: 2, description: "Lumpy and sausage like", icon: "🟫", severity: "moderate" },
@@ -669,6 +706,73 @@ function LogScreen() {
     { type: 6, description: "Mushy consistency with ragged edges", icon: "🤎", severity: "moderate" },
     { type: 7, description: "Liquid consistency with no solid pieces", icon: "🟤", severity: "severe" },
   ]
+
+  const generateDailySummary = () => {
+    const symptomTotal = Object.values(logData.symptoms).reduce((sum, val) => sum + val, 0)
+    const avgSymptomSeverity = symptomTotal / Object.keys(logData.symptoms).length
+    const triggerFoods = logData.meals.filter((meal) => meal.tag === "trigger").length
+    const safeFoods = logData.meals.filter((meal) => meal.tag === "safe").length
+
+    let overallStatus = "good"
+    const recommendations = []
+
+    // Analyze stool type
+    const stoolTypeNum = Number.parseInt(logData.stoolType)
+    if (stoolTypeNum === 3 || stoolTypeNum === 4) {
+      recommendations.push("✅ Your stool type indicates healthy digestion")
+    } else if (stoolTypeNum <= 2) {
+      overallStatus = "concerning"
+      recommendations.push("⚠️ Consider increasing fiber and water intake for constipation")
+    } else if (stoolTypeNum >= 6) {
+      overallStatus = "concerning"
+      recommendations.push("⚠️ Loose stools may indicate dietary triggers or stress")
+    }
+
+    // Analyze symptoms
+    if (avgSymptomSeverity <= 2) {
+      recommendations.push("✅ Low symptom levels - keep up your current routine")
+    } else if (avgSymptomSeverity <= 5) {
+      overallStatus = "moderate"
+      recommendations.push("💡 Moderate symptoms detected - consider identifying triggers")
+    } else {
+      overallStatus = "concerning"
+      recommendations.push("🚨 High symptom levels - consider consulting a healthcare provider")
+    }
+
+    // Analyze hydration
+    if (logData.waterIntake >= 8) {
+      recommendations.push("✅ Great hydration levels")
+    } else {
+      recommendations.push("💧 Try to increase water intake to 8+ glasses daily")
+    }
+
+    // Analyze stress
+    if (logData.stressLevel >= 7) {
+      recommendations.push("🧘 High stress levels may affect gut health - try relaxation techniques")
+    }
+
+    // Analyze food triggers
+    if (triggerFoods > 0) {
+      recommendations.push(`⚠️ ${triggerFoods} trigger food(s) identified - consider avoiding these`)
+    }
+    if (safeFoods > triggerFoods) {
+      recommendations.push("✅ More safe foods than triggers - good dietary choices")
+    }
+
+    return {
+      date: selectedDate,
+      overallStatus,
+      recommendations,
+      metrics: {
+        stoolType: logData.stoolType,
+        avgSymptoms: avgSymptomSeverity.toFixed(1),
+        waterIntake: logData.waterIntake,
+        stressLevel: logData.stressLevel,
+        triggerFoods,
+        safeFoods,
+      },
+    }
+  }
 
   const updateLogData = (field: string, value: any) => {
     setLogData((prev) => ({ ...prev, [field]: value }))
@@ -716,9 +820,55 @@ function LogScreen() {
   }
 
   const saveLogEntry = () => {
-    // In a real app, this would save to database
-    alert("Log entry saved successfully!")
+    const summary = generateDailySummary()
+    const logEntry = {
+      logData: { ...logData },
+      summary,
+      savedAt: new Date().toISOString(),
+    }
+
+    setSavedLogs((prev) => ({
+      ...prev,
+      [selectedDate]: logEntry,
+    }))
+
+    setDailySummary(summary)
+    setShowSummary(true)
+
+    // In a real app, this would save to database/localStorage
+    console.log("[v0] Saved log entry for", selectedDate, logEntry)
   }
+
+  const calculateTrendsData = () => {
+    const logs = Object.values(savedLogs)
+    if (logs.length === 0) return null
+
+    const avgStoolType =
+      logs.reduce((sum: number, log: any) => sum + (Number.parseInt(log.logData.stoolType) || 0), 0) / logs.length
+
+    const avgSymptoms =
+      logs.reduce((sum: number, log: any) => {
+        const symptomTotal = Object.values(log.logData.symptoms).reduce((s: number, v: any) => s + v, 0)
+        return sum + symptomTotal / Object.keys(log.logData.symptoms).length
+      }, 0) / logs.length
+
+    const avgWater = logs.reduce((sum: number, log: any) => sum + log.logData.waterIntake, 0) / logs.length
+
+    const totalTriggers = logs.reduce(
+      (sum: number, log: any) => sum + log.logData.meals.filter((meal: any) => meal.tag === "trigger").length,
+      0,
+    )
+
+    return {
+      avgStoolType: avgStoolType.toFixed(1),
+      avgSymptoms: avgSymptoms.toFixed(1),
+      avgWater: avgWater.toFixed(1),
+      totalTriggers,
+      totalEntries: logs.length,
+    }
+  }
+
+  const trendsData = calculateTrendsData()
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-24">
@@ -767,68 +917,154 @@ function LogScreen() {
         </div>
       </div>
 
+      {showSummary && dailySummary && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Daily Summary</h2>
+              <button onClick={() => setShowSummary(false)} className="text-gray-400 hover:text-white">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div
+                className={`p-4 rounded-lg ${
+                  dailySummary.overallStatus === "good"
+                    ? "bg-green-900/30 border border-green-700"
+                    : dailySummary.overallStatus === "moderate"
+                      ? "bg-yellow-900/30 border border-yellow-700"
+                      : "bg-red-900/30 border border-red-700"
+                }`}
+              >
+                <h3 className="font-semibold mb-2">Overall Status: {dailySummary.overallStatus.toUpperCase()}</h3>
+                <div className="text-sm text-gray-300">Date: {new Date(dailySummary.date).toLocaleDateString()}</div>
+              </div>
+
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Key Metrics</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>Stool Type: {dailySummary.metrics.stoolType || "Not logged"}</div>
+                  <div>Avg Symptoms: {dailySummary.metrics.avgSymptoms}/10</div>
+                  <div>Water Intake: {dailySummary.metrics.waterIntake} glasses</div>
+                  <div>Stress Level: {dailySummary.metrics.stressLevel}/10</div>
+                  <div>Trigger Foods: {dailySummary.metrics.triggerFoods}</div>
+                  <div>Safe Foods: {dailySummary.metrics.safeFoods}</div>
+                </div>
+              </div>
+
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="font-semibold mb-3">Recommendations</h3>
+                <div className="space-y-2">
+                  {dailySummary.recommendations.map((rec: string, index: number) => (
+                    <div key={index} className="text-sm text-gray-300 flex items-start gap-2">
+                      <span className="mt-0.5">•</span>
+                      <span>{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showTrends ? (
-        /* Trends View */
+        /* Enhanced Trends View with real data */
         <div className="p-6 space-y-6">
           <div className="bg-gradient-to-r from-green-900/50 to-teal-900/50 rounded-xl p-6 border border-green-800/30">
-            <h2 className="text-lg font-semibold mb-4 text-green-300">Weekly Summary</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-400">4.2</div>
-                <div className="text-sm text-gray-300">Avg Stool Type</div>
+            <h2 className="text-lg font-semibold mb-4 text-green-300">
+              {trendsData ? `Summary (${trendsData.totalEntries} entries)` : "No Data Available"}
+            </h2>
+            {trendsData ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-green-400">{trendsData.avgStoolType}</div>
+                  <div className="text-sm text-gray-300">Avg Stool Type</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-blue-400">{trendsData.avgWater}</div>
+                  <div className="text-sm text-gray-300">Avg Water Intake</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-yellow-400">{trendsData.avgSymptoms}</div>
+                  <div className="text-sm text-gray-300">Avg Symptoms</div>
+                </div>
+                <div className="bg-gray-800/50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-red-400">{trendsData.totalTriggers}</div>
+                  <div className="text-sm text-gray-300">Total Triggers</div>
+                </div>
               </div>
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-400">1.8</div>
-                <div className="text-sm text-gray-300">Daily Frequency</div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <span className="text-4xl mb-2 block">📊</span>
+                <p>Start logging daily to see trends</p>
               </div>
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-yellow-400">3.2</div>
-                <div className="text-sm text-gray-300">Avg Symptoms</div>
-              </div>
-              <div className="bg-gray-800/50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-purple-400">2.1L</div>
-                <div className="text-sm text-gray-300">Daily Water</div>
-              </div>
-            </div>
+            )}
           </div>
 
-          <div className="bg-gray-800 rounded-xl p-6">
-            <h3 className="font-semibold mb-4">Symptom Trends (7 days)</h3>
-            <div className="space-y-3">
-              {Object.entries(logData.symptoms).map(([symptom, value]) => (
-                <div key={symptom} className="flex items-center justify-between">
-                  <span className="capitalize text-sm">{symptom}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-500 to-red-500 rounded-full"
-                        style={{ width: `${(value / 10) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-400 w-8">{value}/10</span>
+          {trendsData && (
+            <>
+              <div className="bg-gray-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Recent Entries</h3>
+                <div className="space-y-3">
+                  {Object.entries(savedLogs)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .slice(0, 7)
+                    .map(([date, entry]: [string, any]) => (
+                      <div key={date} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                        <div>
+                          <div className="font-medium">{new Date(date).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-400">Status: {entry.summary.overallStatus}</div>
+                        </div>
+                        <div
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            entry.summary.overallStatus === "good"
+                              ? "bg-green-900/50 text-green-300"
+                              : entry.summary.overallStatus === "moderate"
+                                ? "bg-yellow-900/50 text-yellow-300"
+                                : "bg-red-900/50 text-red-300"
+                          }`}
+                        >
+                          {entry.summary.overallStatus}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="bg-gray-800 rounded-xl p-6">
+                <h3 className="font-semibold mb-4">Pattern Analysis</h3>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-300">
+                    Most common stool type: Type {Math.round(Number.parseFloat(trendsData.avgStoolType))}
+                  </div>
+                  <div className="text-sm text-gray-300">Average symptom severity: {trendsData.avgSymptoms}/10</div>
+                  <div className="text-sm text-gray-300">
+                    Daily water goal achievement: {Number.parseFloat(trendsData.avgWater) >= 8 ? "✅" : "❌"}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-gray-800 rounded-xl p-6">
-            <h3 className="font-semibold mb-4">Top Food Triggers</h3>
-            <div className="space-y-2">
-              {["Spicy foods", "Dairy products", "High fiber foods"].map((food, index) => (
-                <div key={food} className="flex items-center justify-between py-2">
-                  <span className="text-sm">{food}</span>
-                  <span className="text-xs bg-red-900/50 text-red-300 px-2 py-1 rounded-full">
-                    {3 - index} triggers
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         /* Daily Log View */
         <div className="p-6 space-y-6">
+          {dailySummary && !showSummary && (
+            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-4 border border-blue-800/30">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold text-blue-300">Daily Summary Available</h3>
+                  <p className="text-sm text-gray-400">Status: {dailySummary.overallStatus}</p>
+                </div>
+                <Button onClick={() => setShowSummary(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  View Summary
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Stool Tracker */}
           {activeSection === "stool" && (
             <div className="space-y-6">
@@ -1133,7 +1369,7 @@ function LogScreen() {
               onClick={saveLogEntry}
               className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-semibold text-lg shadow-lg"
             >
-              💾 Save Today's Log
+              💾 Save Today's Log & Generate Summary
             </Button>
           </div>
         </div>
