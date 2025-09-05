@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React from "react"
+
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
 
@@ -278,23 +280,22 @@ export default function OnboardingFlow() {
           )}
         </div>
       </div>
-    )
+    </div>
   )
 }
 
-function DashboardScreen() {\
+function DashboardScreen() {
   const [selectedTip, setSelectedTip] = useState<string | null>(null)
   const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
 
-  const calculateHealthStatus = () => {\
+  const calculateHealthStatus = () => {
     const today = new Date().toISOString().split("T")[0]
     const todayLog = savedLogs[today]
 
-    // Default status if no log data
-    let colonHealth = { status: "No Data\", color: "gray", icon: "❓" }
-    let digestiveHealth = { status: "No Data\", color: "gray", icon: "❓" }
+    let colonHealth = { status: "No Data", color: "gray", icon: "❓" }
+    let digestiveHealth = { status: "No Data", color: "gray", icon: "❓" }
 
-    if (todayLog && todayLog.logData) {\
+    if (todayLog && todayLog.logData) {
       const { stoolType, symptoms, stressLevel } = todayLog.logData
 
       // Calculate colon health based on stool type
@@ -310,9 +311,9 @@ function DashboardScreen() {\
       // Calculate digestive health based on symptoms
       const symptomTotal = Object.values(symptoms).reduce((sum: number, val: any) => sum + val, 0)
       const avgSymptoms = symptomTotal / Object.keys(symptoms).length
-\
+
       if (avgSymptoms <= 2 && stressLevel <= 5) {
-        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }\
+        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }
       } else if (avgSymptoms <= 4 && stressLevel <= 7) {
         digestiveHealth = { status: "Good", color: "yellow", icon: "⚠️" }
       } else {
@@ -323,10 +324,8 @@ function DashboardScreen() {\
     return { colonHealth, digestiveHealth }
   }
 
-  const { colonHealth, digestiveHealth } = calculateHealthStatus()
-
   React.useEffect(() => {
-    // In a real app, this would load from database/localStorage\
+    // In a real app, this would load from database/localStorage
     const storedLogs = localStorage.getItem("gutguard-logs")
     if (storedLogs) {
       setSavedLogs(JSON.parse(storedLogs))
@@ -336,25 +335,25 @@ function DashboardScreen() {\
   const wellnessTips = [
     {
       id: "hydration",
-      title: \"Stay Hydrated",
+      title: "Stay Hydrated",
       description: "Drink 8-10 glasses of water daily to support digestion",
       icon: "💧",
     },
     {
       id: "fiber",
-      title: \"Increase Fiber Gradually",
+      title: "Increase Fiber Gradually",
       description: "Add 5g of fiber weekly to avoid digestive discomfort",
       icon: "🌾",
     },
     {
       id: "probiotics",
-      title: \"Include Probiotics",
+      title: "Include Probiotics",
       description: "Yogurt, kefir, and fermented foods support gut bacteria",
       icon: "🦠",
     },
     {
       id: "mindful",
-      title: \"Eat Mindfully",
+      title: "Eat Mindfully",
       description: "Chew slowly and avoid eating when stressed",
       icon: "🧘",
     },
@@ -377,6 +376,8 @@ function DashboardScreen() {\
     "Excessive caffeine",
     "Spicy foods (if sensitive)",
   ]
+
+  const { colonHealth, digestiveHealth } = calculateHealthStatus()
 
   return (
     <div className="p-6 space-y-6">
@@ -506,23 +507,23 @@ function DashboardScreen() {\
   )
 }
 
-function ScanScreen() {\
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)\
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)\
+function ScanScreen() {
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<{
     food: string
-    confidence: number\
-    suitable: boolean\
+    confidence: number
+    suitable: boolean
     reason: string
   } | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const startCamera = async () => {
-    try {\
+    try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error(\"Camera API not supported in this browser")
+        throw new Error("Camera API not supported in this browser")
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices()
@@ -531,7 +532,7 @@ function ScanScreen() {\
       if (videoDevices.length === 0) {
         throw new Error("No camera devices found")
       }
-\
+
       let stream: MediaStream | null = null
 
       try {
@@ -543,14 +544,14 @@ function ScanScreen() {\
           },
         })
       } catch (envError) {
-        try {\
-          stream = await navigator.mediaDevices.getUserMedia({\
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              facingMode: "user",\
-              width: { ideal: 1280 },\
-              height: { ideal: 720 },\
+              facingMode: "user",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
             },
-          })\
+          })
         } catch (userError) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -563,13 +564,13 @@ function ScanScreen() {\
 
       if (stream) {
         setCameraStream(stream)
-        if (videoRef.current) {\
+        if (videoRef.current) {
           videoRef.current.srcObject = stream
         }
-      }\
+      }
     } catch (error: any) {
       let errorMessage = "Camera access failed. "
-\
+
       if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
         errorMessage += "No camera device found."
       } else if (error.name === "NotAllowedError") {
@@ -585,7 +586,7 @@ function ScanScreen() {\
   }
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {\
+    if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current
       const video = videoRef.current
       const context = canvas.getContext("2d")
@@ -768,6 +769,7 @@ function LogScreen() {
   const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
   const [showSummary, setShowSummary] = useState(false)
   const [dailySummary, setDailySummary] = useState<any>(null)
+  const [showTrends, setShowTrends] = useState(false)
 
   const [logData, setLogData] = useState({
     stoolType: "",
@@ -793,7 +795,6 @@ function LogScreen() {
   })
 
   const [currentStep, setCurrentStep] = useState(0)
-  const [showTrends, setShowTrends] = useState(false)
 
   const steps = [
     { id: "stool", title: "Stool Tracking", icon: "🚽", description: "Bristol Stool Chart & Details" },
@@ -1414,52 +1415,50 @@ function LogScreen() {
           {/* Symptom Log - Step 1 */}
           {currentStep === 1 && (
             <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">Bristol Stool Chart</h3>
-            <p className="text-sm text-gray-600">Select the type that best matches your stool today:</p>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {[1, 2, 3, 4, 5, 6, 7].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setLogData({ ...logData, stoolType: type })}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    logData.stoolType === type
-                      ? 'border-green-500 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{getStoolIcon(type)}</span>
-                    <div>
-                      <div className="font-medium">Type {type}</div>
-                      <div className="text-sm text-gray-600">{getStoolDescription(type)}</div>
+              <h3 className="text-lg font-semibold text-gray-800">Bristol Stool Chart</h3>
+              <p className="text-sm text-gray-600">Select the type that best matches your stool today:</p>
+
+              <div className="grid grid-cols-1 gap-3">
+                {[1, 2, 3, 4, 5, 6, 7].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setLogData({ ...logData, stoolType: type })}
+                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                      logData.stoolType === type
+                        ? "border-green-500 bg-green-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="text-2xl">{getStoolIcon(type)}</span>
+                      <div>
+                        <div className="font-medium">Type {type}</div>
+                        <div className="text-sm text-gray-600">{getStoolDescription(type)}</div>
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+                  </button>
+                ))}
+              </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">
-                Additional Notes (Optional)
-              </label>
-              <textarea
-                value={logData.stoolNotes}
-                onChange={(e) => setLogData({ ...logData, stoolNotes: e.target.value })}
-                placeholder="Any additional observations about your stool..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                rows={3}
-              />
-            </div>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Additional Notes (Optional)</label>
+                <textarea
+                  value={logData.stoolNotes}
+                  onChange={(e) => setLogData({ ...logData, stoolNotes: e.target.value })}
+                  placeholder="Any additional observations about your stool..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  rows={3}
+                />
+              </div>
 
-            <button
-              onClick={() => setCurrentStep(2)}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
-            >
-              Next: Symptoms
-            </button>
-          </div>
-        )}
+              <button
+                onClick={() => setCurrentStep(2)}
+                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Next: Symptoms
+              </button>
+            </div>
+          )}
 
           {/* Food Journal - Step 2 */}
           {currentStep === 2 && (
@@ -1885,26 +1884,42 @@ function SettingsScreen() {
 
 function getStoolIcon(type: number): string {
   switch (type) {
-    case 1: return "💩";
-    case 2: return "🪵";
-    case 3: return "🧱";
-    case 4: return "🐍";
-    case 5: return "💧";
-    case 6: return "🍧";
-    case 7: return "🌊";
-    default: return "❓";
+    case 1:
+      return "💩"
+    case 2:
+      return "🪵"
+    case 3:
+      return "🧱"
+    case 4:
+      return "🐍"
+    case 5:
+      return "💧"
+    case 6:
+      return "🍧"
+    case 7:
+      return "🌊"
+    default:
+      return "❓"
   }
 }
 
 function getStoolDescription(type: number): string {
   switch (type) {
-    case 1: return "Separate hard lumps, like nuts (hard to pass)";
-    case 2: return "Sausage-shaped, but lumpy";
-    case 3: return "Like a sausage but with cracks on its surface";
-    case 4: return "Like a sausage or snake, smooth and soft";
-    case 5: return "Soft blobs with clear-cut edges (passed easily)";
-    case 6: return "Fluffy pieces with ragged edges, a mushy stool";
-    case 7: return "Watery, no solid pieces. (entirely liquid)";
-    default: return "Unknown stool type";
+    case 1:
+      return "Separate hard lumps, like nuts (hard to pass)"
+    case 2:
+      return "Sausage-shaped, but lumpy"
+    case 3:
+      return "Like a sausage but with cracks on its surface"
+    case 4:
+      return "Like a sausage or snake, smooth and soft"
+    case 5:
+      return "Soft blobs with clear-cut edges (passed easily)"
+    case 6:
+      return "Fluffy pieces with ragged edges, a mushy stool"
+    case 7:
+      return "Watery, no solid pieces. (entirely liquid)"
+    default:
+      return "Unknown stool type"
   }
 }
