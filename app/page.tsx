@@ -7,20 +7,17 @@ import { ArrowLeft, Camera } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
-export default function Home() {
+export default function OnboardingFlow() {
   const [showSplash, setShowSplash] = useState(true)
-  const [showDashboard, setShowDashboard] = useState(false)
-  const [showWelcome, setShowWelcome] = useState(false)
-  const [agreed, setAgreed] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [showDashboard, setShowDashboard] = useState(false)
   const [dashboardTab, setDashboardTab] = useState("dashboard")
+  const [showDevControls, setShowDevControls] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+
   const router = useRouter()
-
   const supabase = useMemo(() => createClient(), [])
-
-  const [showDevControls, setShowDevControls] = useState(false)
 
   const [authData, setAuthData] = useState({
     name: "",
@@ -58,16 +55,6 @@ export default function Home() {
     stressLevel: [5],
   })
 
-  useEffect(() => {
-    if (showSplash) {
-      const timer = setTimeout(() => {
-        setShowSplash(false)
-        setShowWelcome(true)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [showSplash])
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setAuthFormLoading(true)
@@ -79,9 +66,8 @@ export default function Home() {
         password: authData.password,
       })
       if (error) throw error
-      // setIsAuthenticated(true)
       setShowAuth(false)
-      setShowSplash(true)
+      setShowDashboard(true)
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -105,14 +91,13 @@ export default function Home() {
         email: authData.email,
         password: authData.password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || window.location.origin,
-          data: {
-            name: authData.name,
-          },
+          data: { name: authData.name },
+          emailRedirectTo: undefined, // No email confirmation needed
         },
       })
       if (error) throw error
-      setAuthError("Please check your email to confirm your account")
+      setShowAuth(false)
+      setShowDashboard(true)
     } catch (error: any) {
       setAuthError(error.message)
     } finally {
@@ -165,100 +150,129 @@ export default function Home() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const startDashboard = () => setShowDashboard(true)
+  const startDashboard = () => {
+    setShowAuth(true)
+    setAuthMode("login")
+  }
+
   const switchTab = (tab: string) => setDashboardTab(tab)
 
   const resetToSplash = () => {
     setShowSplash(true)
     setShowDashboard(false)
+    setShowAuth(false)
     setCurrentStep(0)
   }
 
   const goToOnboarding = () => {
     setShowSplash(false)
     setShowDashboard(false)
+    setShowAuth(false)
     setCurrentStep(0)
   }
 
   const goToPaywall = () => {
     setShowSplash(false)
     setShowDashboard(false)
-    setShowWelcome(false)
+    setShowAuth(false)
     setCurrentStep(10)
-  }
-
-  const goToAuth = () => {
-    setShowSplash(false)
-    setShowDashboard(false)
-    setShowWelcome(false)
-    setCurrentStep(0)
-    setShowAuth(true)
-    setAuthMode("signup")
   }
 
   const goToDashboard = () => {
     setShowSplash(false)
-    setShowDashboard(true)
     setShowAuth(false)
+    setShowDashboard(true)
     setDashboardTab("dashboard")
   }
 
-  if (showSplash) {
+  useEffect(() => {
+    if (showSplash) {
+      const timer = setTimeout(() => {
+        setShowSplash(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [showSplash])
+
+  if (showDevControls) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex items-center justify-center">
-        <div className="text-center">
-          <img
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-            alt="GutGuard Logo"
-            className="w-32 h-32 mx-auto mb-6 animate-pulse"
-          />
-          <h1 className="text-4xl font-bold text-white mb-2">GutGuard</h1>
-          <p className="text-green-200">Your Digestive Health Companion</p>
-        </div>
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            onClick={() => setShowDevControls(!showDevControls)}
+            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+          >
+            Dev
+          </button>
+        )}
+
+        {showDevControls && (
+          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+            <div className="flex flex-col gap-2">
+              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Splash
+              </button>
+              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Onboarding
+              </button>
+              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Paywall
+              </button>
+              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
 
-  if (showAuth) {
+  if (showSplash) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <div className="text-center mb-8">
+      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+        {process.env.NODE_ENV !== "production" && (
+          <button
+            onClick={() => setShowDevControls(!showDevControls)}
+            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+          >
+            Dev
+          </button>
+        )}
+
+        {showDevControls && (
+          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+            <div className="flex flex-col gap-2">
+              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Splash
+              </button>
+              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Onboarding
+              </button>
+              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Paywall
+              </button>
+              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-sm mx-auto flex flex-col h-screen">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="relative w-48 h-48 flex items-center justify-center">
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
                 alt="GutGuard Logo"
-                className="w-16 h-16 mx-auto mb-4"
+                className="w-full h-full object-contain animate-pulse"
               />
-              <h1 className="text-2xl font-bold text-green-400">GutGuard</h1>
             </div>
+          </div>
 
-            <div className="bg-gray-800 rounded-lg p-6">
-              <div className="flex mb-6">
-                <button
-                  onClick={() => setAuthMode("login")}
-                  className={`flex-1 py-2 px-4 rounded-l-lg ${
-                    authMode === "login" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
-                  }`}
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-2 px-4 rounded-r-lg ${
-                    authMode === "signup" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
-                  }`}
-                >
-                  Sign Up
-                </button>
-              </div>
-
-              {authMode === "login" ? (
-                <LoginForm onSuccess={goToDashboard} />
-              ) : (
-                <SignupForm onSuccess={goToDashboard} />
-              )}
-            </div>
+          <div className="text-center pb-20">
+            <h1 className="text-3xl font-bold mb-2 text-green-400">GutGuard</h1>
+            <p className="text-gray-400 text-lg">Your Digital Gut Health Companion</p>
           </div>
         </div>
       </div>
@@ -303,75 +317,255 @@ export default function Home() {
     )
   }
 
+  if (showAuth) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+              alt="GutGuard Logo"
+              className="w-24 h-24 mx-auto mb-4"
+            />
+            <h1 className="text-3xl font-bold text-green-400">
+              {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
+            </h1>
+            <p className="text-gray-400 mt-2">
+              {authMode === "login" ? "Sign in to access your dashboard" : "Create your account to continue"}
+            </p>
+          </div>
+
+          <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="space-y-6">
+            {authMode === "signup" && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={authData.name}
+                  onChange={(e) => setAuthData({ ...authData, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={authData.email}
+                onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={authData.password}
+                onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder={authMode === "login" ? "Enter your password" : "Create a password"}
+                required
+              />
+            </div>
+
+            {authMode === "signup" && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={authData.confirmPassword}
+                  onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+            )}
+
+            {authError && (
+              <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
+            )}
+
+            <button
+              type="submit"
+              disabled={authFormLoading}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+            >
+              {authFormLoading
+                ? authMode === "login"
+                  ? "Signing In..."
+                  : "Creating Account..."
+                : authMode === "login"
+                  ? "Sign In"
+                  : "Create Account"}
+            </button>
+
+            {authMode === "login" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!authData.email) {
+                    setAuthError("Please enter your email address first")
+                    return
+                  }
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(authData.email)
+                    if (error) throw error
+                    alert("Password reset email sent! Check your inbox.")
+                  } catch (error: any) {
+                    setAuthError(error.message)
+                  }
+                }}
+                className="w-full text-green-400 hover:text-green-300 text-sm underline"
+              >
+                Forgot Password?
+              </button>
+            )}
+          </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-gray-400">
+              {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                className="text-green-400 hover:text-green-300 font-semibold"
+              >
+                {authMode === "login" ? "Sign Up" : "Sign In"}
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (currentStep === 10) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-green-400 mb-2">Choose Your Plan</h1>
-            <p className="text-gray-300">Get personalized gut health insights and recommendations</p>
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+              alt="GutGuard Logo"
+              className="w-24 h-24 mx-auto mb-6"
+            />
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+              Choose Your Plan
+            </h1>
+            <p className="text-xl text-gray-300 mb-8">
+              Get personalized gut health insights and AI-powered recommendations
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <h3 className="text-xl font-semibold mb-4">Monthly Plan</h3>
-              <div className="text-3xl font-bold text-green-400 mb-4">
-                $9.99<span className="text-sm text-gray-400">/month</span>
+            {/* Monthly Plan */}
+            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 hover:border-green-500 transition-all duration-300">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold mb-2">Monthly</h3>
+                <div className="text-4xl font-bold text-green-400 mb-4">$9.99</div>
+                <p className="text-gray-400 mb-6">per month</p>
+                <ul className="text-left space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Daily gut health tracking</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>AI-powered food recommendations</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Personalized insights & trends</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>24/7 AI health coach</span>
+                  </li>
+                </ul>
+                <a
+                  href="https://buy.stripe.com/test_28o5lE8Qs5Hy5Gg9AA"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 block text-center"
+                >
+                  Start Monthly Plan
+                </a>
               </div>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>Daily health tracking
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>AI-powered insights
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>Personalized recommendations
-                </li>
-              </ul>
-              <a
-                href="https://buy.stripe.com/test_28o5lE8Ry5Hy9Gg4gh"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-center transition-colors"
-              >
-                Choose Monthly
-              </a>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-6 border border-green-600 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-1 rounded-full text-sm">
-                Best Value
+            {/* Yearly Plan */}
+            <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 border-2 border-green-500 rounded-2xl p-6 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">BEST VALUE</span>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Yearly Plan</h3>
-              <div className="text-3xl font-bold text-green-400 mb-4">
-                $99.99<span className="text-sm text-gray-400">/year</span>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold mb-2">Yearly</h3>
+                <div className="text-4xl font-bold text-green-400 mb-2">$99.99</div>
+                <div className="text-sm text-gray-400 line-through mb-2">$119.88</div>
+                <p className="text-gray-400 mb-6">per year • Save $19.89</p>
+                <ul className="text-left space-y-3 mb-6">
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Everything in Monthly</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Priority customer support</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Advanced analytics & reports</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-green-400">✓</span>
+                    <span>Early access to new features</span>
+                  </li>
+                </ul>
+                <a
+                  href="https://buy.stripe.com/test_00g01k4Cg1rieaI4gh"
+                  className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 block text-center shadow-lg"
+                >
+                  Start Yearly Plan
+                </a>
               </div>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>Everything in Monthly
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>2 months free
-                </li>
-                <li className="flex items-center">
-                  <span className="text-green-400 mr-2">✓</span>Priority support
-                </li>
-              </ul>
-              <a
-                href="https://buy.stripe.com/test_6oE01k4Bi9XO5q0cMN"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-center transition-colors"
-              >
-                Choose Yearly
-              </a>
             </div>
           </div>
 
-          <div className="text-center">
-            <button
-              onClick={goToAuth}
-              className="bg-gray-700 hover:bg-gray-600 text-white py-3 px-8 rounded-lg transition-colors"
-            >
-              Continue to Create Account
-            </button>
+          <div className="text-center space-y-4">
+            <p className="text-gray-400">Already have an account or want to create one?</p>
+            <div className="flex gap-4 justify-center">
+              <a
+                href="/auth/login"
+                className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-xl transition-colors duration-200"
+              >
+                Sign In
+              </a>
+              <a
+                href="/auth/signup"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-xl transition-colors duration-200"
+              >
+                Create Account
+              </a>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              Sign up or log in to access your personalized dashboard after subscription
+            </p>
           </div>
         </div>
       </div>
@@ -448,161 +642,6 @@ export default function Home() {
         </div>
       </div>
     </div>
-  )
-}
-
-function LoginForm({ onSuccess }: { onSuccess: () => void }) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  const supabase = useMemo(() => createClient(), [])
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-      onSuccess()
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 px-4 rounded-lg transition-colors"
-      >
-        {loading ? "Signing In..." : "Sign In"}
-      </button>
-    </form>
-  )
-}
-
-function SignupForm({ onSuccess }: { onSuccess: () => void }) {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  const supabase = useMemo(() => createClient(), [])
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name },
-        },
-      })
-
-      if (error) throw error
-      onSuccess()
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSignup} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
-          required
-        />
-      </div>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 px-4 rounded-lg transition-colors"
-      >
-        {loading ? "Creating Account..." : "Create Account"}
-      </button>
-    </form>
   )
 }
 
@@ -2071,7 +2110,7 @@ function AdviceScreen() {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-.126-.126-.126-.331 0-.457a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
             />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>

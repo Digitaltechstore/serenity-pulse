@@ -32,8 +32,8 @@ export default function LoginPage() {
         throw error
       }
 
-      console.log("[v0] Login successful, redirecting to dashboard")
-      router.push("/?showDashboard=true")
+      console.log("[v0] Login successful, redirecting to main app")
+      router.push("/")
     } catch (error: any) {
       console.error("[v0] Login failed:", error.message)
       setError(error.message)
