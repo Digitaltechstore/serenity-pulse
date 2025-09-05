@@ -1,8 +1,6 @@
 "use client"
 
-import React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
 
@@ -280,23 +278,23 @@ export default function OnboardingFlow() {
           )}
         </div>
       </div>
-    </div>
+    )
   )
 }
 
-function DashboardScreen() {
+function DashboardScreen() {\
   const [selectedTip, setSelectedTip] = useState<string | null>(null)
   const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
 
-  const calculateHealthStatus = () => {
+  const calculateHealthStatus = () => {\
     const today = new Date().toISOString().split("T")[0]
     const todayLog = savedLogs[today]
 
     // Default status if no log data
-    let colonHealth = { status: "No Data", color: "gray", icon: "❓" }
-    let digestiveHealth = { status: "No Data", color: "gray", icon: "❓" }
+    let colonHealth = { status: "No Data\", color: "gray", icon: "❓" }
+    let digestiveHealth = { status: "No Data\", color: "gray", icon: "❓" }
 
-    if (todayLog && todayLog.logData) {
+    if (todayLog && todayLog.logData) {\
       const { stoolType, symptoms, stressLevel } = todayLog.logData
 
       // Calculate colon health based on stool type
@@ -312,9 +310,9 @@ function DashboardScreen() {
       // Calculate digestive health based on symptoms
       const symptomTotal = Object.values(symptoms).reduce((sum: number, val: any) => sum + val, 0)
       const avgSymptoms = symptomTotal / Object.keys(symptoms).length
-
+\
       if (avgSymptoms <= 2 && stressLevel <= 5) {
-        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }
+        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }\
       } else if (avgSymptoms <= 4 && stressLevel <= 7) {
         digestiveHealth = { status: "Good", color: "yellow", icon: "⚠️" }
       } else {
@@ -328,7 +326,7 @@ function DashboardScreen() {
   const { colonHealth, digestiveHealth } = calculateHealthStatus()
 
   React.useEffect(() => {
-    // In a real app, this would load from database/localStorage
+    // In a real app, this would load from database/localStorage\
     const storedLogs = localStorage.getItem("gutguard-logs")
     if (storedLogs) {
       setSavedLogs(JSON.parse(storedLogs))
@@ -338,25 +336,25 @@ function DashboardScreen() {
   const wellnessTips = [
     {
       id: "hydration",
-      title: "Stay Hydrated",
+      title: \"Stay Hydrated",
       description: "Drink 8-10 glasses of water daily to support digestion",
       icon: "💧",
     },
     {
       id: "fiber",
-      title: "Increase Fiber Gradually",
+      title: \"Increase Fiber Gradually",
       description: "Add 5g of fiber weekly to avoid digestive discomfort",
       icon: "🌾",
     },
     {
       id: "probiotics",
-      title: "Include Probiotics",
+      title: \"Include Probiotics",
       description: "Yogurt, kefir, and fermented foods support gut bacteria",
       icon: "🦠",
     },
     {
       id: "mindful",
-      title: "Eat Mindfully",
+      title: \"Eat Mindfully",
       description: "Chew slowly and avoid eating when stressed",
       icon: "🧘",
     },
@@ -508,23 +506,23 @@ function DashboardScreen() {
   )
 }
 
-function ScanScreen() {
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+function ScanScreen() {\
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)\
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)\
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<{
     food: string
-    confidence: number
-    suitable: boolean
+    confidence: number\
+    suitable: boolean\
     reason: string
   } | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const startCamera = async () => {
-    try {
+    try {\
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera API not supported in this browser")
+        throw new Error(\"Camera API not supported in this browser")
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices()
@@ -533,7 +531,7 @@ function ScanScreen() {
       if (videoDevices.length === 0) {
         throw new Error("No camera devices found")
       }
-
+\
       let stream: MediaStream | null = null
 
       try {
@@ -545,14 +543,14 @@ function ScanScreen() {
           },
         })
       } catch (envError) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
+        try {\
+          stream = await navigator.mediaDevices.getUserMedia({\
             video: {
-              facingMode: "user",
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              facingMode: "user",\
+              width: { ideal: 1280 },\
+              height: { ideal: 720 },\
             },
-          })
+          })\
         } catch (userError) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -565,13 +563,13 @@ function ScanScreen() {
 
       if (stream) {
         setCameraStream(stream)
-        if (videoRef.current) {
+        if (videoRef.current) {\
           videoRef.current.srcObject = stream
         }
-      }
+      }\
     } catch (error: any) {
       let errorMessage = "Camera access failed. "
-
+\
       if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
         errorMessage += "No camera device found."
       } else if (error.name === "NotAllowedError") {
@@ -587,7 +585,7 @@ function ScanScreen() {
   }
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
+    if (videoRef.current && canvasRef.current) {\
       const canvas = canvasRef.current
       const video = videoRef.current
       const context = canvas.getContext("2d")
@@ -1399,6 +1397,15 @@ function LogScreen() {
                       rows={3}
                     />
                   </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={nextStep}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-semibold"
+                    >
+                      Next →
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1614,16 +1621,14 @@ function LogScreen() {
             </div>
           )}
 
-          {currentStep < 5 && (
+          {currentStep > 0 && currentStep < 5 && (
             <div className="flex gap-3 sticky bottom-24 bg-gray-900 pt-4">
-              {currentStep > 0 && (
-                <Button
-                  onClick={prevStep}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-4 rounded-xl font-semibold"
-                >
-                  ← Previous
-                </Button>
-              )}
+              <Button
+                onClick={prevStep}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-4 rounded-xl font-semibold"
+              >
+                ← Previous
+              </Button>
               <Button
                 onClick={nextStep}
                 disabled={!isStepComplete()}
@@ -1631,7 +1636,7 @@ function LogScreen() {
                   isStepComplete()
                     ? "bg-green-500 hover:bg-green-600 text-white"
                     : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                } ${currentStep === 0 ? "flex-1" : ""}`}
+                }`}
               >
                 {currentStep === steps.length - 1 ? "Complete & View Summary" : "Next →"}
               </Button>
