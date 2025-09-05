@@ -661,14 +661,24 @@ function LogScreen() {
     dailyNotes: "",
     attachedImage: null as string | null,
   })
-  const [activeSection, setActiveSection] = useState("stool")
+
+  const [currentStep, setCurrentStep] = useState(0)
   const [showTrends, setShowTrends] = useState(false)
+
+  const steps = [
+    { id: "stool", title: "Stool Tracking", icon: "🚽", description: "Bristol Stool Chart & Details" },
+    { id: "symptoms", title: "Symptoms", icon: "🤒", description: "Rate your symptom severity" },
+    { id: "food", title: "Food Journal", icon: "🍽️", description: "Log meals and reactions" },
+    { id: "lifestyle", title: "Lifestyle", icon: "💧", description: "Hydration, sleep & stress" },
+    { id: "notes", title: "Daily Notes", icon: "📝", description: "Personal observations" },
+  ]
 
   useEffect(() => {
     const savedData = savedLogs[selectedDate]
     if (savedData) {
       setLogData(savedData.logData)
       setDailySummary(savedData.summary)
+      setCurrentStep(5) // Go to summary view
     } else {
       // Reset to default values for new date
       setLogData({
@@ -694,6 +704,7 @@ function LogScreen() {
         attachedImage: null,
       })
       setDailySummary(null)
+      setCurrentStep(0) // Start from beginning
     }
   }, [selectedDate, savedLogs])
 
@@ -868,6 +879,38 @@ function LogScreen() {
     }
   }
 
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      // Complete questionnaire and show summary
+      saveLogEntry()
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const isStepComplete = () => {
+    switch (currentStep) {
+      case 0: // Stool
+        return logData.stoolType !== ""
+      case 1: // Symptoms
+        return true // Always allow progression
+      case 2: // Food
+        return true // Always allow progression
+      case 3: // Lifestyle
+        return true // Always allow progression
+      case 4: // Notes
+        return true // Always allow progression
+      default:
+        return true
+    }
+  }
+
   const trendsData = calculateTrendsData()
 
   return (
@@ -894,27 +937,28 @@ function LogScreen() {
           </div>
         </div>
 
-        {/* Section Navigation */}
-        <div className="flex gap-2 mt-4 overflow-x-auto">
-          {[
-            { id: "stool", label: "Stool", icon: "🚽" },
-            { id: "symptoms", label: "Symptoms", icon: "🤒" },
-            { id: "food", label: "Food", icon: "🍽️" },
-            { id: "lifestyle", label: "Lifestyle", icon: "💧" },
-            { id: "notes", label: "Notes", icon: "📝" },
-          ].map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === section.id ? "bg-green-500 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-              }`}
-            >
-              <span>{section.icon}</span>
-              {section.label}
-            </button>
-          ))}
-        </div>
+        {!showTrends && currentStep < 5 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-400">
+                Step {currentStep + 1} of {steps.length}
+              </span>
+              <span className="text-sm text-gray-400">
+                {Math.round(((currentStep + 1) / steps.length) * 100)}% Complete
+              </span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+              />
+            </div>
+            <div className="mt-3">
+              <h2 className="text-lg font-semibold text-green-300">{steps[currentStep]?.title}</h2>
+              <p className="text-sm text-gray-400">{steps[currentStep]?.description}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {showSummary && dailySummary && (
@@ -1012,8 +1056,15 @@ function LogScreen() {
                     .sort(([a], [b]) => b.localeCompare(a))
                     .slice(0, 7)
                     .map(([date, entry]: [string, any]) => (
-                      <div key={date} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-                        <div>
+                      <button
+                        key={date}
+                        onClick={() => {
+                          setSelectedDate(date)
+                          setShowTrends(false)
+                        }}
+                        className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        <div className="text-left">
                           <div className="font-medium">{new Date(date).toLocaleDateString()}</div>
                           <div className="text-sm text-gray-400">Status: {entry.summary.overallStatus}</div>
                         </div>
@@ -1028,7 +1079,7 @@ function LogScreen() {
                         >
                           {entry.summary.overallStatus}
                         </div>
-                      </div>
+                      </button>
                     ))}
                 </div>
               </div>
@@ -1048,25 +1099,89 @@ function LogScreen() {
             </>
           )}
         </div>
-      ) : (
-        /* Daily Log View */
+      ) : currentStep === 5 && dailySummary ? (
+        /* Daily Summary View with graphs and metrics */
         <div className="p-6 space-y-6">
-          {dailySummary && !showSummary && (
-            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-4 border border-blue-800/30">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-semibold text-blue-300">Daily Summary Available</h3>
-                  <p className="text-sm text-gray-400">Status: {dailySummary.overallStatus}</p>
-                </div>
-                <Button onClick={() => setShowSummary(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  View Summary
-                </Button>
+          <div className="bg-gradient-to-r from-green-900/50 to-teal-900/50 rounded-xl p-6 border border-green-800/30">
+            <h2 className="text-xl font-semibold mb-4 text-green-300">Daily Summary</h2>
+            <div className="text-sm text-gray-300 mb-4">{new Date(dailySummary.date).toLocaleDateString()}</div>
+
+            <div
+              className={`p-4 rounded-lg mb-6 ${
+                dailySummary.overallStatus === "good"
+                  ? "bg-green-900/30 border border-green-700"
+                  : dailySummary.overallStatus === "moderate"
+                    ? "bg-yellow-900/30 border border-yellow-700"
+                    : "bg-red-900/30 border border-red-700"
+              }`}
+            >
+              <h3 className="text-lg font-semibold mb-2">Overall Status: {dailySummary.overallStatus.toUpperCase()}</h3>
+            </div>
+
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-amber-400">{dailySummary.metrics.stoolType || "N/A"}</div>
+                <div className="text-sm text-gray-300">Stool Type</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-red-400">{dailySummary.metrics.avgSymptoms}</div>
+                <div className="text-sm text-gray-300">Avg Symptoms</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-400">{dailySummary.metrics.waterIntake}</div>
+                <div className="text-sm text-gray-300">Water Glasses</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-purple-400">{dailySummary.metrics.stressLevel}</div>
+                <div className="text-sm text-gray-300">Stress Level</div>
               </div>
             </div>
-          )}
 
-          {/* Stool Tracker */}
-          {activeSection === "stool" && (
+            {/* Food Analysis */}
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
+              <h3 className="font-semibold mb-3">Food Analysis</h3>
+              <div className="flex justify-between">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-green-400">{dailySummary.metrics.safeFoods}</div>
+                  <div className="text-xs text-gray-300">Safe Foods</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-red-400">{dailySummary.metrics.triggerFoods}</div>
+                  <div className="text-xs text-gray-300">Trigger Foods</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="bg-gray-700 rounded-lg p-4">
+              <h3 className="font-semibold mb-3">Personalized Recommendations</h3>
+              <div className="space-y-2">
+                {dailySummary.recommendations.map((rec: string, index: number) => (
+                  <div key={index} className="text-sm text-gray-300 flex items-start gap-2">
+                    <span className="mt-0.5">•</span>
+                    <span>{rec}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              <Button onClick={() => setCurrentStep(0)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                Edit Today's Log
+              </Button>
+              <Button onClick={() => setShowTrends(true)} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                View Trends
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Sequential Questionnaire Flow */
+        <div className="p-6 space-y-6">
+          {/* Stool Tracker - Step 0 */}
+          {currentStep === 0 && (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-xl p-6 border border-amber-800/30">
                 <h2 className="text-lg font-semibold mb-4 text-amber-300">Bristol Stool Chart</h2>
@@ -1153,8 +1268,8 @@ function LogScreen() {
             </div>
           )}
 
-          {/* Symptom Log */}
-          {activeSection === "symptoms" && (
+          {/* Symptom Log - Step 1 */}
+          {currentStep === 1 && (
             <div className="bg-gradient-to-r from-red-900/30 to-pink-900/30 rounded-xl p-6 border border-red-800/30">
               <h2 className="text-lg font-semibold mb-4 text-red-300">Symptom Severity (0-10)</h2>
               <div className="space-y-6">
@@ -1194,8 +1309,8 @@ function LogScreen() {
             </div>
           )}
 
-          {/* Food Journal */}
-          {activeSection === "food" && (
+          {/* Food Journal - Step 2 */}
+          {currentStep === 2 && (
             <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-800/30">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-green-300">Food & Drink Journal</h2>
@@ -1246,8 +1361,8 @@ function LogScreen() {
             </div>
           )}
 
-          {/* Lifestyle */}
-          {activeSection === "lifestyle" && (
+          {/* Lifestyle - Step 3 */}
+          {currentStep === 3 && (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-xl p-6 border border-blue-800/30">
                 <h2 className="text-lg font-semibold mb-4 text-blue-300">Hydration & Lifestyle</h2>
@@ -1312,8 +1427,8 @@ function LogScreen() {
             </div>
           )}
 
-          {/* Daily Notes */}
-          {activeSection === "notes" && (
+          {/* Daily Notes - Step 4 */}
+          {currentStep === 4 && (
             <div className="bg-gradient-to-r from-purple-900/30 to-indigo-900/30 rounded-xl p-6 border border-purple-800/30">
               <h2 className="text-lg font-semibold mb-4 text-purple-300">Daily Notes & Photos</h2>
 
@@ -1363,15 +1478,29 @@ function LogScreen() {
             </div>
           )}
 
-          {/* Save Button */}
-          <div className="sticky bottom-24 bg-gray-900 pt-4">
-            <Button
-              onClick={saveLogEntry}
-              className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-semibold text-lg shadow-lg"
-            >
-              💾 Save Today's Log & Generate Summary
-            </Button>
-          </div>
+          {currentStep < 5 && (
+            <div className="flex gap-3 sticky bottom-24 bg-gray-900 pt-4">
+              {currentStep > 0 && (
+                <Button
+                  onClick={prevStep}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-4 rounded-xl font-semibold"
+                >
+                  ← Previous
+                </Button>
+              )}
+              <Button
+                onClick={nextStep}
+                disabled={!isStepComplete()}
+                className={`flex-1 py-4 rounded-xl font-semibold ${
+                  isStepComplete()
+                    ? "bg-green-500 hover:bg-green-600 text-white"
+                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                } ${currentStep === 0 ? "flex-1" : ""}`}
+              >
+                {currentStep === steps.length - 1 ? "Complete & View Summary" : "Next →"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
