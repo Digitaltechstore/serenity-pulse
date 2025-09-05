@@ -1,27 +1,26 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import React from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Camera } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
-export default function OnboardingFlow() {
-  const [currentStep, setCurrentStep] = useState(0)
+export default function Home() {
+  const [showSplash, setShowSplash] = useState(true)
   const [showDashboard, setShowDashboard] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [agreed, setAgreed] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0)
   const [dashboardTab, setDashboardTab] = useState("dashboard")
-  const [showDevControls, setShowDevControls] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
+  const router = useRouter()
 
   const supabase = useMemo(() => createClient(), [])
 
-  const [showSplash, setShowSplash] = useState(true)
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [authLoading, setAuthLoading] = useState(true)
-  const router = useRouter()
+  const [showDevControls, setShowDevControls] = useState(false)
 
   const [authData, setAuthData] = useState({
     name: "",
@@ -60,32 +59,14 @@ export default function OnboardingFlow() {
   })
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-
-        if (user) {
-          setIsAuthenticated(true)
-        } else {
-          // if (!window.location.pathname.startsWith("/auth/")) {
-          //   window.location.href = "/auth/login"
-          //   return
-          // }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-        // if (!window.location.pathname.startsWith("/auth/")) {
-        //   window.location.href = "/auth/login"
-        // }
-      } finally {
-        setAuthLoading(false)
-      }
+    if (showSplash) {
+      const timer = setTimeout(() => {
+        setShowSplash(false)
+        setShowWelcome(true)
+      }, 3000)
+      return () => clearTimeout(timer)
     }
-
-    checkAuth()
-  }, [supabase])
+  }, [showSplash])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,7 +79,7 @@ export default function OnboardingFlow() {
         password: authData.password,
       })
       if (error) throw error
-      setIsAuthenticated(true)
+      // setIsAuthenticated(true)
       setShowAuth(false)
       setShowSplash(true)
     } catch (error: any) {
@@ -184,15 +165,7 @@ export default function OnboardingFlow() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const startDashboard = () => {
-    setShowAuth(true)
-  }
-
-  const handleAuthSuccess = () => {
-    setShowAuth(false)
-    setShowDashboard(true)
-  }
-
+  const startDashboard = () => setShowDashboard(true)
   const switchTab = (tab: string) => setDashboardTab(tab)
 
   const resetToSplash = () => {
@@ -210,92 +183,37 @@ export default function OnboardingFlow() {
   const goToPaywall = () => {
     setShowSplash(false)
     setShowDashboard(false)
+    setShowWelcome(false)
     setCurrentStep(10)
+  }
+
+  const goToAuth = () => {
+    setShowSplash(false)
+    setShowDashboard(false)
+    setShowWelcome(false)
+    setCurrentStep(0)
+    setShowAuth(true)
+    setAuthMode("signup")
   }
 
   const goToDashboard = () => {
     setShowSplash(false)
     setShowDashboard(true)
+    setShowAuth(false)
     setDashboardTab("dashboard")
-  }
-
-  useEffect(() => {
-    if (showSplash) {
-      const timer = setTimeout(() => {
-        setShowSplash(false)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-  }, [showSplash])
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Redirecting to login...</p>
-        </div>
-      </div>
-    )
   }
 
   if (showSplash) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
-        {process.env.NODE_ENV !== "production" && (
-          <button
-            onClick={() => setShowDevControls(!showDevControls)}
-            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
-          >
-            Dev
-          </button>
-        )}
-
-        {showDevControls && (
-          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
-            <div className="flex flex-col gap-2">
-              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Splash
-              </button>
-              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Onboarding
-              </button>
-              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Paywall
-              </button>
-              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Dashboard
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="max-w-sm mx-auto flex flex-col h-screen">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="relative w-48 h-48 flex items-center justify-center">
-              <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-                alt="GutGuard Logo"
-                className="w-full h-full object-contain animate-pulse"
-              />
-            </div>
-          </div>
-
-          <div className="text-center pb-20">
-            <h1 className="text-3xl font-bold mb-2 text-green-400">GutGuard</h1>
-            <p className="text-gray-400 text-lg">Your Digital Gut Health Companion</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 flex items-center justify-center">
+        <div className="text-center">
+          <img
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+            alt="GutGuard Logo"
+            className="w-32 h-32 mx-auto mb-6 animate-pulse"
+          />
+          <h1 className="text-4xl font-bold text-white mb-2">GutGuard</h1>
+          <p className="text-green-200">Your Digestive Health Companion</p>
         </div>
       </div>
     )
@@ -303,40 +221,44 @@ export default function OnboardingFlow() {
 
   if (showAuth) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Logo"
-              className="w-24 h-24 mx-auto mb-4"
-            />
-            <h1 className="text-3xl font-bold text-green-400">
-              {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
-            </h1>
-            <p className="text-gray-400 mt-2">
-              {authMode === "login" 
-                ? "Sign in to access your gut health dashboard" 
-                : "Create your account to start your gut health journey"}
-            </p>
-          </div>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-8">
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+                alt="GutGuard Logo"
+                className="w-16 h-16 mx-auto mb-4"
+              />
+              <h1 className="text-2xl font-bold text-green-400">GutGuard</h1>
+            </div>
 
-          {authMode === "login" ? (
-            <LoginForm onSuccess={handleAuthSuccess} />
-          ) : (
-            <SignupForm onSuccess={handleAuthSuccess} />
-          )}
+            <div className="bg-gray-800 rounded-lg p-6">
+              <div className="flex mb-6">
+                <button
+                  onClick={() => setAuthMode("login")}
+                  className={`flex-1 py-2 px-4 rounded-l-lg ${
+                    authMode === "login" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
+                  }`}
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setAuthMode("signup")}
+                  className={`flex-1 py-2 px-4 rounded-r-lg ${
+                    authMode === "signup" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
+                  }`}
+                >
+                  Sign Up
+                </button>
+              </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-400">
-              {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
-                className="text-green-400 hover:text-green-300 font-semibold"
-              >
-                {authMode === "login" ? "Sign Up" : "Sign In"}
-              </button>
-            </p>
+              {authMode === "login" ? (
+                <LoginForm onSuccess={goToDashboard} />
+              ) : (
+                <SignupForm onSuccess={goToDashboard} />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -375,6 +297,81 @@ export default function OnboardingFlow() {
                 <span>{tab.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (currentStep === 10) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-green-400 mb-2">Choose Your Plan</h1>
+            <p className="text-gray-300">Get personalized gut health insights and recommendations</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-xl font-semibold mb-4">Monthly Plan</h3>
+              <div className="text-3xl font-bold text-green-400 mb-4">
+                $9.99<span className="text-sm text-gray-400">/month</span>
+              </div>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>Daily health tracking
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>AI-powered insights
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>Personalized recommendations
+                </li>
+              </ul>
+              <a
+                href="https://buy.stripe.com/test_28o5lE8Ry5Hy9Gg4gh"
+                className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-center transition-colors"
+              >
+                Choose Monthly
+              </a>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-6 border border-green-600 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-4 py-1 rounded-full text-sm">
+                Best Value
+              </div>
+              <h3 className="text-xl font-semibold mb-4">Yearly Plan</h3>
+              <div className="text-3xl font-bold text-green-400 mb-4">
+                $99.99<span className="text-sm text-gray-400">/year</span>
+              </div>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>Everything in Monthly
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>2 months free
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>Priority support
+                </li>
+              </ul>
+              <a
+                href="https://buy.stripe.com/test_6oE01k4Bi9XO5q0cMN"
+                className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-center transition-colors"
+              >
+                Choose Yearly
+              </a>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={goToAuth}
+              className="bg-gray-700 hover:bg-gray-600 text-white py-3 px-8 rounded-lg transition-colors"
+            >
+              Continue to Create Account
+            </button>
           </div>
         </div>
       </div>
@@ -450,22 +447,177 @@ export default function OnboardingFlow() {
           )}
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 }
 
-function DashboardScreen() {\
+function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const supabase = useMemo(() => createClient(), [])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+      onSuccess()
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleLogin} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 px-4 rounded-lg transition-colors"
+      >
+        {loading ? "Signing In..." : "Sign In"}
+      </button>
+    </form>
+  )
+}
+
+function SignupForm({ onSuccess }: { onSuccess: () => void }) {
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const supabase = useMemo(() => createClient(), [])
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      })
+
+      if (error) throw error
+      onSuccess()
+    } catch (error: any) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSignup} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"
+          required
+        />
+      </div>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 px-4 rounded-lg transition-colors"
+      >
+        {loading ? "Creating Account..." : "Create Account"}
+      </button>
+    </form>
+  )
+}
+
+function DashboardScreen() {
   const [selectedTip, setSelectedTip] = useState<string | null>(null)
   const [savedLogs, setSavedLogs] = useState<Record<string, any>>({})
 
-  const calculateHealthStatus = () => {\
+  const calculateHealthStatus = () => {
     const today = new Date().toISOString().split("T")[0]
     const todayLog = savedLogs[today]
 
-    let colonHealth = { status: "No Data\", color: "gray", icon: "❓" }
-    let digestiveHealth = { status: "No Data\", color: "gray", icon: "❓" }
+    let colonHealth = { status: "No Data", color: "gray", icon: "❓" }
+    let digestiveHealth = { status: "No Data", color: "gray", icon: "❓" }
 
-    if (todayLog && todayLog.logData) {\
+    if (todayLog && todayLog.logData) {
       const { stoolType, symptoms, stressLevel } = todayLog.logData
 
       // Calculate colon health based on stool type
@@ -481,9 +633,9 @@ function DashboardScreen() {\
       // Calculate digestive health based on symptoms
       const symptomTotal = Object.values(symptoms).reduce((sum: number, val: any) => sum + val, 0)
       const avgSymptoms = symptomTotal / Object.keys(symptoms).length
-\
+
       if (avgSymptoms <= 2 && stressLevel <= 5) {
-        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }\
+        digestiveHealth = { status: "Excellent", color: "green", icon: "✅" }
       } else if (avgSymptoms <= 4 && stressLevel <= 7) {
         digestiveHealth = { status: "Good", color: "yellow", icon: "⚠️" }
       } else {
@@ -495,7 +647,7 @@ function DashboardScreen() {\
   }
 
   React.useEffect(() => {
-    // In a real app, this would load from database/localStorage\
+    // In a real app, this would load from database/localStorage
     const storedLogs = localStorage.getItem("gutguard-logs")
     if (storedLogs) {
       setSavedLogs(JSON.parse(storedLogs))
@@ -505,25 +657,25 @@ function DashboardScreen() {\
   const wellnessTips = [
     {
       id: "hydration",
-      title: \"Stay Hydrated",
+      title: "Stay Hydrated",
       description: "Drink 8-10 glasses of water daily to support digestion",
       icon: "💧",
     },
     {
       id: "fiber",
-      title: \"Increase Fiber Gradually",
+      title: "Increase Fiber Gradually",
       description: "Add 5g of fiber weekly to avoid digestive discomfort",
       icon: "🌾",
     },
     {
       id: "probiotics",
-      title: \"Include Probiotics",
+      title: "Include Probiotics",
       description: "Yogurt, kefir, and fermented foods support gut bacteria",
       icon: "🦠",
     },
     {
       id: "mindful",
-      title: \"Eat Mindfully",
+      title: "Eat Mindfully",
       description: "Chew slowly and avoid eating when stressed",
       icon: "🧘",
     },
@@ -677,13 +829,13 @@ function DashboardScreen() {\
   )
 }
 
-function ScanScreen() {\
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)\
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)\
+function ScanScreen() {
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<{
     food: string
-    confidence: number\
+    confidence: number
     suitable: boolean
     reason: string
   } | null>(null)
@@ -691,9 +843,9 @@ function ScanScreen() {\
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const startCamera = async () => {
-    try {\
+    try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error(\"Camera API not supported in this browser")
+        throw new Error("Camera API not supported in this browser")
       }
 
       const devices = await navigator.mediaDevices.enumerateDevices()
@@ -702,7 +854,7 @@ function ScanScreen() {\
       if (videoDevices.length === 0) {
         throw new Error("No camera devices found")
       }
-\
+
       let stream: MediaStream | null = null
 
       try {
@@ -714,14 +866,14 @@ function ScanScreen() {\
           },
         })
       } catch (envError) {
-        try {\
-          stream = await navigator.mediaDevices.getUserMedia({\
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
             video: {
-              facingMode: "user",\
-              width: { ideal: 1280 },\
-              height: { ideal: 720 },\
+              facingMode: "user",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
             },
-          })\
+          })
         } catch (userError) {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -734,13 +886,13 @@ function ScanScreen() {\
 
       if (stream) {
         setCameraStream(stream)
-        if (videoRef.current) {\
+        if (videoRef.current) {
           videoRef.current.srcObject = stream
-        }\
-      }\
+        }
+      }
     } catch (error: any) {
       let errorMessage = "Camera access failed. "
-\
+
       if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
         errorMessage += "No camera device found."
       } else if (error.name === "NotAllowedError") {
@@ -756,7 +908,7 @@ function ScanScreen() {\
   }
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {\
+    if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current
       const video = videoRef.current
       const context = canvas.getContext("2d")
@@ -1858,7 +2010,7 @@ function AdviceScreen() {
 
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage],
           context: "User is asking about gut health and digestive wellness",
@@ -1919,7 +2071,7 @@ function AdviceScreen() {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-.126-.126-.126-.331 0-.457a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
             />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
@@ -1931,7 +2083,7 @@ function AdviceScreen() {
           <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
             <div className="flex items-start gap-3 max-w-[85%]">
               {message.role === "assistant" && (
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
                   <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                   </svg>
@@ -2096,157 +2248,4 @@ function getStoolDescription(type: number): string {
 
 function DevControls() {
   return null
-}
-
-function LoginForm({ onSuccess }: { onSuccess: () => void }) {
-  const [formData, setFormData] = useState({ email: "", password: "" })
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const supabase = useMemo(() => createClient(), [])
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      })
-      if (error) throw error
-      onSuccess()
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleLogin} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-        <input
-          type="password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      {error && <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{error}</div>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl"
-      >
-        {loading ? "Signing In..." : "Sign In"}
-      </button>
-    </form>
-  )
-}
-
-function SignupForm({ onSuccess }: { onSuccess: () => void }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  })
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const supabase = useMemo(() => createClient(), [])
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: { name: formData.name },
-          emailRedirectTo: undefined,
-        },
-      })
-      if (error) throw error
-      onSuccess()
-    } catch (error: any) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSignup} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-        <input
-          type="text"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-        <input
-          type="password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
-        <input
-          type="password"
-          value={formData.confirmPassword}
-          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
-      {error && <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{error}</div>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl"
-      >
-        {loading ? "Creating Account..." : "Create Account"}
-      </button>
-    </form>
-  )
 }

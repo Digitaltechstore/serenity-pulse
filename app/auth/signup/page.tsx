@@ -45,7 +45,6 @@ export default function SignupPage() {
           data: {
             name: formData.name,
           },
-          emailRedirectTo: undefined, // No email confirmation needed
         },
       })
 
@@ -55,7 +54,7 @@ export default function SignupPage() {
       }
 
       console.log("[v0] Signup successful, redirecting to dashboard")
-      router.push("/")
+      router.push("/?showDashboard=true")
     } catch (error: any) {
       console.error("[v0] Signup failed:", error.message)
       setError(error.message)
