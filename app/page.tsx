@@ -728,54 +728,62 @@ function AdviceScreen() {
     }
   }
 
+  const handleQuickAction = (action: string) => {
+    setInputMessage(`Please help me with: ${action}`)
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[calc(100vh-140px)]">
-      <div className="flex items-center gap-4 mb-6 px-6 pt-6">
-        <h1 className="text-xl font-semibold">AI Coach</h1>
-        <div className="ml-auto">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-            <span className="text-lg">⚙️</span>
-          </Button>
+      <div className="flex items-center justify-between mb-6 px-6 pt-6 border-b border-gray-700 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-white">Gut Guardian AI</h1>
+            <p className="text-sm text-gray-400">Your Personal Health Advisor</p>
+          </div>
         </div>
-      </div>
-
-      <div className="px-6 mb-4">
-        <div className="flex gap-2 flex-wrap">
-          {["Flare plan (24-48h)", "Gentle 7-day plan", "Trigger hunt", "Doctor checklist"].map((action) => (
-            <Button
-              key={action}
-              variant="outline"
-              size="sm"
-              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 text-xs"
-              onClick={() => setInputMessage(action)}
-            >
-              {action}
-            </Button>
-          ))}
-        </div>
+        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-gray-800">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 space-y-4 mb-4">
         {messages.map((message, index) => (
           <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className="flex items-start gap-3 max-w-[80%]">
+            <div className="flex items-start gap-3 max-w-[85%]">
               {message.role === "assistant" && (
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-sm">🤖</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                  </svg>
                 </div>
               )}
               <div
-                className={`px-4 py-3 rounded-2xl ${
+                className={`px-4 py-3 rounded-2xl shadow-sm ${
                   message.role === "user"
-                    ? "bg-green-500 text-white rounded-br-md"
-                    : "bg-gray-800 text-white rounded-bl-md"
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md"
+                    : "bg-gray-800 border border-gray-700 text-white rounded-bl-md"
                 }`}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
               </div>
               {message.role === "user" && (
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-sm">👤</span>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
                 </div>
               )}
             </div>
@@ -785,13 +793,15 @@ function AdviceScreen() {
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm">🤖</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
               </div>
-              <div className="bg-gray-800 text-white px-4 py-3 rounded-2xl rounded-bl-md">
+              <div className="bg-gray-800 border border-gray-700 text-white px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
-                  <span className="text-sm">Thinking...</span>
+                  <div className="animate-pulse w-2 h-2 bg-green-400 rounded-full"></div>
+                  <div className="animate-pulse w-2 h-2 bg-green-400 rounded-full animation-delay-200"></div>
+                  <div className="animate-pulse w-2 h-2 bg-green-400 rounded-full animation-delay-400"></div>
+                  <span className="text-sm ml-2">Analyzing your question...</span>
                 </div>
               </div>
             </div>
@@ -800,15 +810,15 @@ function AdviceScreen() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-6 pb-6">
-        <div className="flex gap-3 items-end">
+      <div className="px-6 pb-4">
+        <div className="flex gap-3 items-end bg-gray-800 rounded-2xl p-3 border border-gray-700">
           <div className="flex-1">
             <textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask me about your gut health, symptoms, diet, or lifestyle..."
-              className="w-full bg-gray-800 text-white px-4 py-3 rounded-2xl border border-gray-600 focus:border-green-500 focus:outline-none resize-none min-h-[44px] max-h-32"
+              className="w-full bg-transparent text-white placeholder-gray-400 resize-none focus:outline-none min-h-[40px] max-h-32 leading-relaxed"
               rows={1}
               disabled={isLoading}
             />
@@ -816,14 +826,47 @@ function AdviceScreen() {
           <Button
             onClick={sendMessage}
             disabled={isLoading || !inputMessage.trim()}
-            className="bg-green-500 hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed w-12 h-12 rounded-full flex items-center justify-center"
+            className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-200"
           >
             {isLoading ? (
               <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
             ) : (
-              <span className="text-lg">➤</span>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
             )}
           </Button>
+        </div>
+      </div>
+
+      <div className="px-6 pb-6 border-t border-gray-700 pt-4">
+        <h3 className="text-sm font-medium text-gray-300 mb-3">Quick Actions</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { title: "Flare plan (24-48h)", icon: "🚨", color: "from-red-500 to-red-600" },
+            { title: "Gentle 7-day plan", icon: "🌱", color: "from-green-500 to-green-600" },
+            { title: "Trigger hunt", icon: "🔍", color: "from-blue-500 to-blue-600" },
+            { title: "Doctor checklist", icon: "👩‍⚕️", color: "from-purple-500 to-purple-600" },
+          ].map((action) => (
+            <Button
+              key={action.title}
+              variant="outline"
+              className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700 h-auto p-3 flex flex-col items-start gap-2 transition-all duration-200 hover:border-gray-500"
+              onClick={() => handleQuickAction(action.title)}
+            >
+              <div
+                className={`w-8 h-8 bg-gradient-to-r ${action.color} rounded-lg flex items-center justify-center text-sm`}
+              >
+                {action.icon}
+              </div>
+              <span className="text-xs font-medium leading-tight text-left">{action.title}</span>
+            </Button>
+          ))}
         </div>
       </div>
     </div>
