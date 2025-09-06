@@ -52,23 +52,16 @@ export default function PaywallPage() {
               </li>
             </ul>
 
-            <div className="space-y-3">
-              <a
-                href="https://buy.stripe.com/4gM28s8ycc8R0uP092bbG0p"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                  Sign Up - Monthly Plan
-                </Button>
-              </a>
-              <a href="/login" className="block">
-                <Button variant="outline" className="w-full py-3 bg-transparent">
-                  Login - Existing Users
-                </Button>
-              </a>
-            </div>
+            <a
+              href="https://buy.stripe.com/4gM28s8ycc8R0uP092bbG0p"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
+                Proceed to Payment: GutGuard Monthly Plan for $14.99 USD
+              </Button>
+            </a>
           </div>
 
           {/* Yearly Plan */}
@@ -107,23 +100,16 @@ export default function PaywallPage() {
               </li>
             </ul>
 
-            <div className="space-y-3">
-              <a
-                href="https://buy.stripe.com/7sY9AU15KdcVb9t9JCbbG0q"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                  Sign Up - Yearly Plan
-                </Button>
-              </a>
-              <a href="/login" className="block">
-                <Button variant="outline" className="w-full py-3 bg-transparent">
-                  Login - Existing Users
-                </Button>
-              </a>
-            </div>
+            <a
+              href="https://buy.stripe.com/7sY9AU15KdcVb9t9JCbbG0q"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block"
+            >
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
+                Proceed to Payment: GutGuard Yearly Plan
+              </Button>
+            </a>
           </div>
         </div>
 
