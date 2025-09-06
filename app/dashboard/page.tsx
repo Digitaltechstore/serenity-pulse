@@ -540,7 +540,7 @@ export default function DashboardPage() {
 
   const renderScanFood = () => (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Scan Food</h2>
+      <h2 className="text-2xl font-bold mb-6 text-white">Scan Food</h2>
 
       {!cameraStream && !capturedImage && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
