@@ -51,8 +51,8 @@ export default function DashboardPage() {
         accent: "hsl(155, 28%, 65%)", // Health Green
         background: "hsl(120, 15%, 92%)", // Pale Sage
         surface: "hsl(120, 20%, 95%)", // Lighter Sage
-        text: "hsl(15, 60%, 25%)", // Dark Earthy Brown
-        textSecondary: "hsl(15, 60%, 35%)", // Medium Earthy Brown
+        text: "hsl(15, 60%, 20%)", // Darker text for better contrast
+        textSecondary: "hsl(15, 60%, 30%)", // Darker secondary text
         border: "hsl(120, 25%, 85%)", // Sage Border
         danger: "hsl(15, 60%, 45%)", // Earthy Brown
         success: "hsl(155, 28%, 65%)", // Healthy Sage
@@ -67,8 +67,8 @@ export default function DashboardPage() {
         accent: "hsl(280, 40%, 60%)", // Medium Lavender
         background: "hsl(280, 35%, 12%)", // Deep Purple
         surface: "hsl(280, 30%, 15%)", // Dark Purple
-        text: "hsl(280, 20%, 85%)", // Light Purple Text
-        textSecondary: "hsl(280, 15%, 75%)", // Medium Purple Text
+        text: "hsl(0, 0%, 95%)", // Pure White Text
+        textSecondary: "hsl(0, 0%, 85%)", // Light Gray Text
         border: "hsl(280, 25%, 25%)", // Purple Border
         danger: "hsl(20, 70%, 55%)", // Warm Orange
         success: "hsl(160, 40%, 65%)", // Soft Green
@@ -83,8 +83,8 @@ export default function DashboardPage() {
         accent: "hsl(338, 60%, 60%)", // Medium Berry
         background: "hsl(15, 55%, 87%)", // Soft Peach-Beige
         surface: "hsl(15, 55%, 91%)", // Light Peach-Beige
-        text: "hsl(345, 60%, 25%)", // Dark Berry
-        textSecondary: "hsl(345, 60%, 35%)", // Medium Berry
+        text: "hsl(345, 60%, 15%)", // Much darker text for better contrast
+        textSecondary: "hsl(345, 60%, 25%)", // Darker secondary text
         border: "hsl(15, 45%, 80%)", // Peach Border
         danger: "hsl(345, 60%, 38%)", // Deep Berry
         success: "hsl(155, 28%, 65%)", // Eucalyptus Green
