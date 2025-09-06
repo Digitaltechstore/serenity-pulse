@@ -41,45 +41,54 @@ export default function DashboardPage() {
 
   const [currentTheme, setCurrentTheme] = useState("normal")
 
-  // Theme definitions with gut health-inspired color palettes
+  // Theme definitions with exact gut health-inspired color palettes using HSL values
   const themes = {
     light: {
-      name: "Light Mode",
+      name: "Soothing Sage",
       colors: {
-        primary: "#10b981", // emerald-500
-        secondary: "#34d399", // emerald-400
-        accent: "#6ee7b7", // emerald-300
-        background: "#f0fdf4", // green-50
-        surface: "#ffffff",
-        text: "#064e3b", // emerald-900
-        textSecondary: "#065f46", // emerald-800
-        border: "#d1fae5", // emerald-100
+        primary: "hsl(142, 45%, 65%)", // Sage Green
+        secondary: "hsl(85, 35%, 75%)", // Soft Lime
+        accent: "hsl(155, 28%, 65%)", // Health Green
+        background: "hsl(120, 15%, 92%)", // Pale Sage
+        surface: "hsl(120, 20%, 95%)", // Lighter Sage
+        text: "hsl(15, 60%, 25%)", // Dark Earthy Brown
+        textSecondary: "hsl(15, 60%, 35%)", // Medium Earthy Brown
+        border: "hsl(120, 25%, 85%)", // Sage Border
+        danger: "hsl(15, 60%, 45%)", // Earthy Brown
+        success: "hsl(155, 28%, 65%)", // Healthy Sage
+        warning: "hsl(45, 85%, 65%)", // Gentle Yellow
       },
     },
     dark: {
       name: "Dark Mode",
       colors: {
-        primary: "#059669", // emerald-600
-        secondary: "#047857", // emerald-700
-        accent: "#065f46", // emerald-800
-        background: "#064e3b", // emerald-900
-        surface: "#065f46", // emerald-800
-        text: "#d1fae5", // emerald-100
-        textSecondary: "#a7f3d0", // emerald-200
-        border: "#047857", // emerald-700
+        primary: "hsl(280, 45%, 70%)", // Bright Lavender
+        secondary: "hsl(160, 40%, 65%)", // Soft Green
+        accent: "hsl(280, 40%, 60%)", // Medium Lavender
+        background: "hsl(280, 35%, 12%)", // Deep Purple
+        surface: "hsl(280, 30%, 15%)", // Dark Purple
+        text: "hsl(280, 20%, 85%)", // Light Purple Text
+        textSecondary: "hsl(280, 15%, 75%)", // Medium Purple Text
+        border: "hsl(280, 25%, 25%)", // Purple Border
+        danger: "hsl(20, 70%, 55%)", // Warm Orange
+        success: "hsl(160, 40%, 65%)", // Soft Green
+        warning: "hsl(45, 85%, 65%)", // Bright Yellow
       },
     },
     normal: {
-      name: "Normal Mode",
+      name: "Berry Gut",
       colors: {
-        primary: "#16a34a", // green-600
-        secondary: "#22c55e", // green-500
-        accent: "#4ade80", // green-400
-        background: "#f9fafb", // gray-50
-        surface: "#ffffff",
-        text: "#1f2937", // gray-800
-        textSecondary: "#374151", // gray-700
-        border: "#e5e7eb", // gray-200
+        primary: "hsl(338, 70%, 72%)", // Berry Pink
+        secondary: "hsl(155, 28%, 65%)", // Eucalyptus Green
+        accent: "hsl(338, 60%, 60%)", // Medium Berry
+        background: "hsl(15, 55%, 87%)", // Soft Peach-Beige
+        surface: "hsl(15, 55%, 91%)", // Light Peach-Beige
+        text: "hsl(345, 60%, 25%)", // Dark Berry
+        textSecondary: "hsl(345, 60%, 35%)", // Medium Berry
+        border: "hsl(15, 45%, 80%)", // Peach Border
+        danger: "hsl(345, 60%, 38%)", // Deep Berry
+        success: "hsl(155, 28%, 65%)", // Eucalyptus Green
+        warning: "hsl(45, 85%, 58%)", // Warm Yellow
       },
     },
   }
@@ -1083,49 +1092,6 @@ export default function DashboardPage() {
                 <span style={{ color: "var(--theme-text)" }}>Weekly Reports</span>
                 <Switch />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
-          <CardHeader>
-            <CardTitle style={{ color: "var(--theme-text)" }}>Data & Privacy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-transparent"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--theme-border)",
-                  color: "var(--theme-text)",
-                }}
-              >
-                Export My Data
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-transparent"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--theme-border)",
-                  color: "var(--theme-text)",
-                }}
-              >
-                Privacy Policy
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-transparent"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "var(--theme-border)",
-                  color: "var(--theme-text)",
-                }}
-              >
-                Terms of Service
-              </Button>
             </div>
           </CardContent>
         </Card>
