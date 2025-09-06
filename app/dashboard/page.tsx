@@ -356,19 +356,26 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Wellness Hub</h1>
-            <p className="text-gray-600">Your daily gut health companion</p>
+            <h1 className="text-3xl font-bold" style={{ color: "var(--theme-text)" }}>
+              Wellness Hub
+            </h1>
+            <p style={{ color: "var(--theme-text-secondary)" }}>Your daily gut health companion</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2 bg-transparent">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="flex items-center gap-2 bg-transparent"
+            style={{ color: "var(--theme-text)", borderColor: "var(--theme-border)" }}
+          >
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
         </div>
 
         {/* Today's Health Status */}
-        <Card className="mb-6">
+        <Card className="mb-6" style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2" style={{ color: "var(--theme-text)" }}>
               <Heart className="h-5 w-5 text-green-600" />
               Today's Health Status
             </CardTitle>
@@ -398,9 +405,9 @@ export default function DashboardPage() {
         </Card>
 
         {/* Wellness Tips */}
-        <Card className="mb-6">
+        <Card className="mb-6" style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Daily Wellness Tips</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Daily Wellness Tips</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -458,9 +465,9 @@ export default function DashboardPage() {
 
         {/* Foods to Eat & Avoid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Card>
+          <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
             <CardHeader>
-              <CardTitle className="text-green-700">Foods to Eat</CardTitle>
+              <CardTitle style={{ color: "var(--theme-success)" }}>Foods to Eat</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -484,9 +491,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
             <CardHeader>
-              <CardTitle className="text-red-700">Foods to Avoid</CardTitle>
+              <CardTitle style={{ color: "var(--theme-danger)" }}>Foods to Avoid</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -512,9 +519,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Today's Risk Assessment */}
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Today's Risk Assessment</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Today's Risk Assessment</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -536,7 +543,7 @@ export default function DashboardPage() {
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Scan Food</h2>
 
       {!cameraStream && !capturedImage && (
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-8 text-center">
             <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Scan Your Food</h3>
@@ -550,7 +557,7 @@ export default function DashboardPage() {
       )}
 
       {cameraStream && (
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-4">
             <div className="relative">
               <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
@@ -568,7 +575,7 @@ export default function DashboardPage() {
       )}
 
       {capturedImage && (
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-4">
             <img src={capturedImage || "/placeholder.svg"} alt="Captured food" className="w-full rounded-lg mb-4" />
             {analysisResult ? (
@@ -610,9 +617,9 @@ export default function DashboardPage() {
       </div>
 
       {showTrends ? (
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Weekly Trends & Summaries</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Weekly Trends & Summaries</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -658,10 +665,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Daily Health Tracking</CardTitle>
-            <div className="flex items-center gap-2">
+            <CardTitle style={{ color: "var(--theme-text)" }}>Daily Health Tracking</CardTitle>
+            <div className="flex items-center gap-2" style={{ color: "var(--theme-text-secondary)" }}>
               <Calendar className="h-4 w-4" />
               <input
                 type="date"
@@ -889,7 +896,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Card className="flex-1 flex flex-col mb-20">
+      <Card
+        className="flex-1 flex flex-col mb-20"
+        style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}
+      >
         <CardContent className="flex-1 flex flex-col p-4">
           <div className="flex-1 overflow-y-auto mb-4 space-y-4 max-h-96">
             {messages.length === 0 && (
