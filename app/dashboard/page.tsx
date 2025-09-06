@@ -26,6 +26,7 @@ import {
   ChevronDown,
   ChevronUp,
   Calendar,
+  Palette,
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -37,6 +38,66 @@ export default function DashboardPage() {
   const [profileName, setProfileName] = useState("")
 
   const [expandedTips, setExpandedTips] = useState<string | null>(null)
+
+  const [currentTheme, setCurrentTheme] = useState("normal")
+
+  // Theme definitions with gut health-inspired color palettes
+  const themes = {
+    light: {
+      name: "Light Mode",
+      colors: {
+        primary: "#10b981", // emerald-500
+        secondary: "#34d399", // emerald-400
+        accent: "#6ee7b7", // emerald-300
+        background: "#f0fdf4", // green-50
+        surface: "#ffffff",
+        text: "#064e3b", // emerald-900
+        textSecondary: "#065f46", // emerald-800
+        border: "#d1fae5", // emerald-100
+      },
+    },
+    dark: {
+      name: "Dark Mode",
+      colors: {
+        primary: "#059669", // emerald-600
+        secondary: "#047857", // emerald-700
+        accent: "#065f46", // emerald-800
+        background: "#064e3b", // emerald-900
+        surface: "#065f46", // emerald-800
+        text: "#d1fae5", // emerald-100
+        textSecondary: "#a7f3d0", // emerald-200
+        border: "#047857", // emerald-700
+      },
+    },
+    normal: {
+      name: "Normal Mode",
+      colors: {
+        primary: "#16a34a", // green-600
+        secondary: "#22c55e", // green-500
+        accent: "#4ade80", // green-400
+        background: "#f9fafb", // gray-50
+        surface: "#ffffff",
+        text: "#1f2937", // gray-800
+        textSecondary: "#374151", // gray-700
+        border: "#e5e7eb", // gray-200
+      },
+    },
+  }
+
+  // Apply theme styles
+  const applyTheme = (themeName: string) => {
+    const theme = themes[themeName as keyof typeof themes]
+    if (theme) {
+      const root = document.documentElement
+      Object.entries(theme.colors).forEach(([key, value]) => {
+        root.style.setProperty(`--theme-${key}`, value)
+      })
+    }
+  }
+
+  useEffect(() => {
+    applyTheme(currentTheme)
+  }, [currentTheme])
 
   // Chat states for AI Coach
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
@@ -906,69 +967,170 @@ export default function DashboardPage() {
 
   const renderSettings = () => (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+      <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--theme-text)" }}>
+        Settings
+      </h2>
 
       <div className="space-y-4">
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Profile & Health</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Profile & Health</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Your name" />
+                <label className="block text-sm font-medium mb-2" style={{ color: "var(--theme-textSecondary)" }}>
+                  Name
+                </label>
+                <Input
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Your name"
+                  style={{
+                    backgroundColor: "var(--theme-background)",
+                    borderColor: "var(--theme-border)",
+                    color: "var(--theme-text)",
+                  }}
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <Input value={user?.email || ""} disabled />
+                <label className="block text-sm font-medium mb-2" style={{ color: "var(--theme-textSecondary)" }}>
+                  Email
+                </label>
+                <Input
+                  value={user?.email || ""}
+                  disabled
+                  style={{
+                    backgroundColor: "var(--theme-background)",
+                    borderColor: "var(--theme-border)",
+                    color: "var(--theme-textSecondary)",
+                  }}
+                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>
+              <Palette className="h-5 w-5 inline mr-2" />
+              Theme Selection
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(themes).map(([key, theme]) => (
+                <div
+                  key={key}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                    currentTheme === key ? "ring-2" : ""
+                  }`}
+                  style={{
+                    backgroundColor: theme.colors.background,
+                    borderColor: currentTheme === key ? theme.colors.primary : theme.colors.border,
+                    ringColor: theme.colors.primary,
+                  }}
+                  onClick={() => setCurrentTheme(key)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium" style={{ color: theme.colors.text }}>
+                        {theme.name}
+                      </h4>
+                      <div className="flex space-x-2 mt-2">
+                        <div
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: theme.colors.primary }}
+                        />
+                        <div
+                          className="w-4 h-4 rounded-full border"
+                          style={{ backgroundColor: theme.colors.secondary }}
+                        />
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.accent }} />
+                      </div>
+                    </div>
+                    {currentTheme === key && (
+                      <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: theme.colors.primary }}
+                      >
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
+          <CardHeader>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Notifications</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span>Daily Log Reminders</span>
+                <span style={{ color: "var(--theme-text)" }}>Daily Log Reminders</span>
                 <Switch />
               </div>
               <div className="flex items-center justify-between">
-                <span>Health Tips</span>
+                <span style={{ color: "var(--theme-text)" }}>Health Tips</span>
                 <Switch />
               </div>
               <div className="flex items-center justify-between">
-                <span>Weekly Reports</span>
+                <span style={{ color: "var(--theme-text)" }}>Weekly Reports</span>
                 <Switch />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardHeader>
-            <CardTitle>Data & Privacy</CardTitle>
+            <CardTitle style={{ color: "var(--theme-text)" }}>Data & Privacy</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start bg-transparent">
+              <Button
+                variant="outline"
+                className="w-full justify-start bg-transparent"
+                style={{
+                  backgroundColor: "transparent",
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
                 Export My Data
               </Button>
-              <Button variant="outline" className="w-full justify-start bg-transparent">
+              <Button
+                variant="outline"
+                className="w-full justify-start bg-transparent"
+                style={{
+                  backgroundColor: "transparent",
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
                 Privacy Policy
               </Button>
-              <Button variant="outline" className="w-full justify-start bg-transparent">
+              <Button
+                variant="outline"
+                className="w-full justify-start bg-transparent"
+                style={{
+                  backgroundColor: "transparent",
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
                 Terms of Service
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="pt-6">
             <Button onClick={handleLogout} variant="destructive" className="w-full">
               <LogOut className="h-4 w-4 mr-2" />
@@ -981,7 +1143,7 @@ export default function DashboardPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--theme-background)" }}>
       {/* Main Content Area */}
       <div className="flex-1 p-4 pb-20">
         {activeTab === "dashboard" && renderDashboard()}
@@ -992,57 +1154,35 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex justify-around items-center py-2">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              activeTab === "dashboard" ? "text-green-600 bg-green-50" : "text-gray-600 hover:text-green-600"
-            }`}
-          >
-            <Home className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">Dashboard</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("scan")}
-            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              activeTab === "scan" ? "text-green-600 bg-green-50" : "text-gray-600 hover:text-green-600"
-            }`}
-          >
-            <Camera className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">Scan Food</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("logs")}
-            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              activeTab === "logs" ? "text-green-600 bg-green-50" : "text-gray-600 hover:text-green-600"
-            }`}
-          >
-            <FileText className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">Logs</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("coach")}
-            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              activeTab === "coach" ? "text-green-600 bg-green-50" : "text-gray-600 hover:text-green-600"
-            }`}
-          >
-            <MessageCircle className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">AI Coach</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
-              activeTab === "settings" ? "text-green-600 bg-green-50" : "text-gray-600 hover:text-green-600"
-            }`}
-          >
-            <Settings className="h-6 w-6 mb-1" />
-            <span className="text-xs font-medium">Settings</span>
-          </button>
+      <div
+        className="fixed bottom-0 left-0 right-0 border-t"
+        style={{
+          backgroundColor: "var(--theme-surface)",
+          borderColor: "var(--theme-border)",
+        }}
+      >
+        <div className="flex justify-around py-2">
+          {[
+            { id: "dashboard", icon: Home, label: "Dashboard" },
+            { id: "scan", icon: Camera, label: "Scan Food" },
+            { id: "logs", icon: FileText, label: "Logs" },
+            { id: "coach", icon: MessageCircle, label: "AI Coach" },
+            { id: "settings", icon: Settings, label: "Settings" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                activeTab === tab.id ? "opacity-100" : "opacity-60"
+              }`}
+              style={{
+                color: activeTab === tab.id ? "var(--theme-primary)" : "var(--theme-textSecondary)",
+              }}
+            >
+              <tab.icon className="h-6 w-6" />
+              <span className="text-xs mt-1">{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>
