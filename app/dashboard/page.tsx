@@ -608,7 +608,7 @@ export default function DashboardPage() {
   const renderLogs = () => (
     <div className="max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Health Log</h2>
+        <h2 className="text-2xl font-bold text-white">Health Log</h2>
         <div className="flex gap-2">
           <Button onClick={() => setShowTrends(!showTrends)} variant="outline" className="bg-transparent">
             {showTrends ? "Daily Log" : "View Trends"}
