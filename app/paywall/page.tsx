@@ -58,8 +58,10 @@ export default function PaywallPage() {
               rel="noopener noreferrer"
               className="block"
             >
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                Proceed to Payment: GutGuard Monthly Plan for $14.99 USD
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-sm">
+                Proceed to Payment
+                <br />
+                Monthly Plan - $14.99
               </Button>
             </a>
           </div>
@@ -106,8 +108,10 @@ export default function PaywallPage() {
               rel="noopener noreferrer"
               className="block"
             >
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3">
-                Proceed to Payment: GutGuard Yearly Plan
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-sm">
+                Proceed to Payment
+                <br />
+                Yearly Plan
               </Button>
             </a>
           </div>
