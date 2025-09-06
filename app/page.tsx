@@ -143,10 +143,15 @@ export default function OnboardingFlow() {
     return { category: "Obese", color: "text-red-400" }
   }
 
-  const nextStep = () => setCurrentStep((prev) => prev + 1)
+  const nextStep = () => {
+    console.log("[v0] Moving to next step, current step:", currentStep)
+    setCurrentStep((prev) => prev + 1)
+  }
+
   const prevStep = () => setCurrentStep((prev) => prev - 1)
 
   const updateFormData = (field: string, value: any) => {
+    console.log("[v0] Updating form data:", field, value)
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -586,7 +591,10 @@ export default function OnboardingFlow() {
 
             <div className="space-y-4">
               <button
-                onClick={() => updateFormData("agreement", !formData.agreement)}
+                onClick={() => {
+                  console.log("[v0] Agreement button clicked, current state:", formData.agreement)
+                  updateFormData("agreement", !formData.agreement)
+                }}
                 className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
                   formData.agreement
                     ? "border-green-500 bg-green-500/10 text-green-400"
@@ -622,7 +630,10 @@ export default function OnboardingFlow() {
 
             {formData.agreement && (
               <Button
-                onClick={nextStep}
+                onClick={() => {
+                  console.log("[v0] Continue button clicked, agreement state:", formData.agreement)
+                  nextStep()
+                }}
                 className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl animate-in slide-in-from-bottom-4 duration-300"
               >
                 Continue
