@@ -194,455 +194,447 @@ export default function OnboardingFlow() {
     }
   }, [showSplash])
 
-  if (showDevControls) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
-        {process.env.NODE_ENV !== "production" && (
-          <button
-            onClick={() => setShowDevControls(!showDevControls)}
-            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
-          >
-            Dev
-          </button>
-        )}
+  const renderStep = () => {
+    if (currentStep === 10) {
+      // Paywall Step
+      return (
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+          <div className="max-w-md w-full space-y-8">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold mb-2">Complete Your Health Journey</h1>
+              <p className="text-gray-400 mb-8">
+                Get personalized insights, AI-powered recommendations, and comprehensive gut health tracking.
+              </p>
+            </div>
 
-        {showDevControls && (
-          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
-            <div className="flex flex-col gap-2">
-              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Splash
-              </button>
-              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Onboarding
-              </button>
-              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Paywall
-              </button>
-              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Dashboard
-              </button>
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-xl p-6 border-2 border-green-500">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold">Premium Plan</h3>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">$9.99</div>
+                    <div className="text-sm text-green-200">per month</div>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm mb-6">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-300">✓</span>
+                    Unlimited health logging
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-300">✓</span>
+                    AI-powered insights & recommendations
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-300">✓</span>
+                    Advanced trend analysis
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-300">✓</span>
+                    Personalized meal suggestions
+                  </li>
+                </ul>
+
+                <div className="space-y-3">
+                  <div className="text-center text-sm text-green-200 mb-4">Choose your account option:</div>
+
+                  <a
+                    href="/auth/signup"
+                    className="block w-full bg-white text-green-600 font-semibold py-3 px-4 rounded-lg text-center hover:bg-gray-100 transition-colors"
+                  >
+                    Sign Up & Subscribe
+                  </a>
+
+                  <a
+                    href="/auth/login"
+                    className="block w-full bg-transparent border-2 border-white text-white font-semibold py-3 px-4 rounded-lg text-center hover:bg-white/10 transition-colors"
+                  >
+                    Login & Subscribe
+                  </a>
+                </div>
+              </div>
+
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Yearly Plan</h3>
+                  <div className="text-right">
+                    <div className="text-xl font-bold">$99.99</div>
+                    <div className="text-sm text-gray-400">per year</div>
+                    <div className="text-xs text-green-400">Save 17%</div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 mb-4">All premium features with 2 months free</p>
+
+                <div className="space-y-3">
+                  <a
+                    href="/auth/signup"
+                    className="block w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg text-center hover:bg-green-700 transition-colors"
+                  >
+                    Sign Up - Yearly
+                  </a>
+
+                  <a
+                    href="/auth/login"
+                    className="block w-full bg-transparent border border-gray-600 text-gray-300 font-semibold py-3 px-4 rounded-lg text-center hover:bg-gray-700 transition-colors"
+                  >
+                    Login - Yearly
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                By subscribing, you agree to our Terms of Service and Privacy Policy
+              </p>
             </div>
           </div>
-        )}
-      </div>
-    )
-  }
+        </div>
+      )
+    }
 
-  if (showSplash) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
-        {process.env.NODE_ENV !== "production" && (
-          <button
-            onClick={() => setShowDevControls(!showDevControls)}
-            className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
-          >
-            Dev
-          </button>
-        )}
+    if (showDevControls) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+          {process.env.NODE_ENV !== "production" && (
+            <button
+              onClick={() => setShowDevControls(!showDevControls)}
+              className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+            >
+              Dev
+            </button>
+          )}
 
-        {showDevControls && (
-          <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
-            <div className="flex flex-col gap-2">
-              <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Splash
-              </button>
-              <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Onboarding
-              </button>
-              <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Paywall
-              </button>
-              <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
-                Dashboard
-              </button>
+          {showDevControls && (
+            <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+              <div className="flex flex-col gap-2">
+                <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Splash
+                </button>
+                <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Onboarding
+                </button>
+                <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Paywall
+                </button>
+                <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Dashboard
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    if (showSplash) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+          {process.env.NODE_ENV !== "production" && (
+            <button
+              onClick={() => setShowDevControls(!showDevControls)}
+              className="fixed top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded text-sm z-50"
+            >
+              Dev
+            </button>
+          )}
+
+          {showDevControls && (
+            <div className="fixed top-16 right-4 bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+              <div className="flex flex-col gap-2">
+                <button onClick={resetToSplash} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Splash
+                </button>
+                <button onClick={goToOnboarding} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Onboarding
+                </button>
+                <button onClick={goToPaywall} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Paywall
+                </button>
+                <button onClick={goToDashboard} className="bg-gray-700 px-3 py-1 rounded text-sm">
+                  Dashboard
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="max-w-sm mx-auto flex flex-col h-screen">
+            <div className="flex-1 flex items-center justify-center">
+              <div className="relative w-48 h-48 flex items-center justify-center">
+                <img
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+                  alt="GutGuard Logo"
+                  className="w-full h-full object-contain animate-pulse"
+                />
+              </div>
+            </div>
+
+            <div className="text-center pb-20">
+              <h1 className="text-3xl font-bold mb-2 text-green-400">GutGuard</h1>
+              <p className="text-gray-400 text-lg">Your Digital Gut Health Companion</p>
             </div>
           </div>
-        )}
+        </div>
+      )
+    }
 
+    if (showDashboard) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white">
+          <DevControls />
+          <div className="pb-20">
+            {dashboardTab === "dashboard" && <DashboardScreen />}
+            {dashboardTab === "scan" && <ScanScreen />}
+            {dashboardTab === "log" && <LogScreen />}
+            {dashboardTab === "advice" && <AdviceScreen />}
+            {dashboardTab === "settings" && <SettingsScreen />}
+          </div>
+
+          <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700">
+            <div className="flex justify-around py-2">
+              {[
+                { id: "dashboard", icon: "🏠", label: "Dashboard" },
+                { id: "scan", icon: "📷", label: "Scan" },
+                { id: "log", icon: "📋", label: "Log" },
+                { id: "advice", icon: "💡", label: "Advice" },
+                { id: "settings", icon: "⚙️", label: "Settings" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  className={`flex flex-col items-center py-2 px-4 text-xs ${
+                    dashboardTab === tab.id ? "text-green-400" : "text-gray-400"
+                  }`}
+                >
+                  <span className="text-lg mb-1">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (showAuth) {
+      return (
+        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+              <img
+                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
+                alt="GutGuard Logo"
+                className="w-24 h-24 mx-auto mb-4"
+              />
+              <h1 className="text-3xl font-bold text-green-400">
+                {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
+              </h1>
+              <p className="text-gray-400 mt-2">
+                {authMode === "login" ? "Sign in to access your dashboard" : "Create your account to continue"}
+              </p>
+            </div>
+
+            <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="space-y-6">
+              {authMode === "signup" && (
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={authData.name}
+                    onChange={(e) => setAuthData({ ...authData, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={authData.email}
+                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={authData.password}
+                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder={authMode === "login" ? "Enter your password" : "Create a password"}
+                  required
+                />
+              </div>
+
+              {authMode === "signup" && (
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={authData.confirmPassword}
+                    onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Confirm your password"
+                    required
+                  />
+                </div>
+              )}
+
+              {authError && (
+                <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={authFormLoading}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
+              >
+                {authFormLoading
+                  ? authMode === "login"
+                    ? "Signing In..."
+                    : "Creating Account..."
+                  : authMode === "login"
+                    ? "Sign In"
+                    : "Create Account"}
+              </button>
+
+              {authMode === "login" && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!authData.email) {
+                      setAuthError("Please enter your email address first")
+                      return
+                    }
+                    try {
+                      const { error } = await supabase.auth.resetPasswordForEmail(authData.email)
+                      if (error) throw error
+                      alert("Password reset email sent! Check your inbox.")
+                    } catch (error: any) {
+                      setAuthError(error.message)
+                    }
+                  }}
+                  className="w-full text-green-400 hover:text-green-300 text-sm underline"
+                >
+                  Forgot Password?
+                </button>
+              )}
+            </form>
+
+            <div className="mt-8 text-center">
+              <p className="text-gray-400">
+                {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
+                  className="text-green-400 hover:text-green-300 font-semibold"
+                >
+                  {authMode === "login" ? "Sign Up" : "Sign In"}
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-6">
+        <DevControls />
         <div className="max-w-sm mx-auto flex flex-col h-screen">
           <div className="flex-1 flex items-center justify-center">
             <div className="relative w-48 h-48 flex items-center justify-center">
               <img
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-                alt="GutGuard Logo"
-                className="w-full h-full object-contain animate-pulse"
+                alt="GutGuard Shield Logo"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
 
-          <div className="text-center pb-20">
-            <h1 className="text-3xl font-bold mb-2 text-green-400">GutGuard</h1>
-            <p className="text-gray-400 text-lg">Your Digital Gut Health Companion</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h1 className="text-2xl font-bold text-balance">Welcome to GutGuard</h1>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Your AI-powered health companion. GutGuard is an educational companion, not a medical device. If you
+                report red flags, we'll show urgent-care guidance and limit non-urgent advice.
+              </p>
+            </div>
 
-  if (showDashboard) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white">
-        <DevControls />
-        <div className="pb-20">
-          {dashboardTab === "dashboard" && <DashboardScreen />}
-          {dashboardTab === "scan" && <ScanScreen />}
-          {dashboardTab === "log" && <LogScreen />}
-          {dashboardTab === "advice" && <AdviceScreen />}
-          {dashboardTab === "settings" && <SettingsScreen />}
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700">
-          <div className="flex justify-around py-2">
-            {[
-              { id: "dashboard", icon: "🏠", label: "Dashboard" },
-              { id: "scan", icon: "📷", label: "Scan" },
-              { id: "log", icon: "📋", label: "Log" },
-              { id: "advice", icon: "💡", label: "Advice" },
-              { id: "settings", icon: "⚙️", label: "Settings" },
-            ].map((tab) => (
+            <div className="space-y-4">
               <button
-                key={tab.id}
-                onClick={() => switchTab(tab.id)}
-                className={`flex flex-col items-center py-2 px-4 text-xs ${
-                  dashboardTab === tab.id ? "text-green-400" : "text-gray-400"
+                onClick={() => updateFormData("agreement", !formData.agreement)}
+                className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
+                  formData.agreement
+                    ? "border-green-500 bg-green-500/10 text-green-400"
+                    : "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
                 }`}
               >
-                <span className="text-lg mb-1">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (showAuth) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Logo"
-              className="w-24 h-24 mx-auto mb-4"
-            />
-            <h1 className="text-3xl font-bold text-green-400">
-              {authMode === "login" ? "Welcome Back" : "Join GutGuard"}
-            </h1>
-            <p className="text-gray-400 mt-2">
-              {authMode === "login" ? "Sign in to access your dashboard" : "Create your account to continue"}
-            </p>
-          </div>
-
-          <form onSubmit={authMode === "login" ? handleLogin : handleSignup} className="space-y-6">
-            {authMode === "signup" && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  value={authData.name}
-                  onChange={(e) => setAuthData({ ...authData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={authData.email}
-                onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={authData.password}
-                onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder={authMode === "login" ? "Enter your password" : "Create a password"}
-                required
-              />
-            </div>
-
-            {authMode === "signup" && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={authData.confirmPassword}
-                  onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Confirm your password"
-                  required
-                />
-              </div>
-            )}
-
-            {authError && (
-              <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-xl">{authError}</div>
-            )}
-
-            <button
-              type="submit"
-              disabled={authFormLoading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors duration-200"
-            >
-              {authFormLoading
-                ? authMode === "login"
-                  ? "Signing In..."
-                  : "Creating Account..."
-                : authMode === "login"
-                  ? "Sign In"
-                  : "Create Account"}
-            </button>
-
-            {authMode === "login" && (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!authData.email) {
-                    setAuthError("Please enter your email address first")
-                    return
-                  }
-                  try {
-                    const { error } = await supabase.auth.resetPasswordForEmail(authData.email)
-                    if (error) throw error
-                    alert("Password reset email sent! Check your inbox.")
-                  } catch (error: any) {
-                    setAuthError(error.message)
-                  }
-                }}
-                className="w-full text-green-400 hover:text-green-300 text-sm underline"
-              >
-                Forgot Password?
-              </button>
-            )}
-          </form>
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-400">
-              {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
-                className="text-green-400 hover:text-green-300 font-semibold"
-              >
-                {authMode === "login" ? "Sign Up" : "Sign In"}
-              </button>
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (currentStep === 10) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-green-900 text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-2xl">
-          <div className="text-center mb-8">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Logo"
-              className="w-24 h-24 mx-auto mb-6"
-            />
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
-              Choose Your Plan
-            </h1>
-            <p className="text-xl text-gray-300 mb-8">
-              Get personalized gut health insights and AI-powered recommendations
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Monthly Plan */}
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 hover:border-green-500 transition-all duration-300">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold mb-2">Monthly</h3>
-                <div className="text-4xl font-bold text-green-400 mb-4">$9.99</div>
-                <p className="text-gray-400 mb-6">per month</p>
-                <ul className="text-left space-y-3 mb-6">
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Daily gut health tracking</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>AI-powered food recommendations</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Personalized insights & trends</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>24/7 AI health coach</span>
-                  </li>
-                </ul>
-                <a
-                  href="https://buy.stripe.com/test_28o5lE8Qs5Hy5Gg9AA"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 block text-center"
-                >
-                  Start Monthly Plan
-                </a>
-              </div>
-            </div>
-
-            {/* Yearly Plan */}
-            <div className="bg-gradient-to-br from-green-900/30 to-teal-900/30 border-2 border-green-500 rounded-2xl p-6 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">BEST VALUE</span>
-              </div>
-              <div className="text-center">
-                <h3 className="text-2xl font-bold mb-2">Yearly</h3>
-                <div className="text-4xl font-bold text-green-400 mb-2">$99.99</div>
-                <div className="text-sm text-gray-400 line-through mb-2">$119.88</div>
-                <p className="text-gray-400 mb-6">per year • Save $19.89</p>
-                <ul className="text-left space-y-3 mb-6">
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Everything in Monthly</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Priority customer support</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Advanced analytics & reports</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="text-green-400">✓</span>
-                    <span>Early access to new features</span>
-                  </li>
-                </ul>
-                <a
-                  href="https://buy.stripe.com/test_00g01k4Cg1rieaI4gh"
-                  className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 block text-center shadow-lg"
-                >
-                  Start Yearly Plan
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center space-y-4">
-            <p className="text-gray-400">Already have an account or want to create one?</p>
-            <div className="flex gap-4 justify-center">
-              <a
-                href="/auth/login"
-                className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-xl transition-colors duration-200"
-              >
-                Sign In
-              </a>
-              <a
-                href="/auth/signup"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-xl transition-colors duration-200"
-              >
-                Create Account
-              </a>
-            </div>
-            <p className="text-sm text-gray-500 mt-4">
-              Sign up or log in to access your personalized dashboard after subscription
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <DevControls />
-      <div className="max-w-sm mx-auto flex flex-col h-screen">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="relative w-48 h-48 flex items-center justify-center">
-            <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%20Sep%204%2C%202025%2C%2004_52_24%20AM-ePXtGduF9ZYJmZoC4lFa2TwZ4yNFm4.png"
-              alt="GutGuard Shield Logo"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold text-balance">Welcome to GutGuard</h1>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              Your AI-powered health companion. GutGuard is an educational companion, not a medical device. If you
-              report red flags, we'll show urgent-care guidance and limit non-urgent advice.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => updateFormData("agreement", !formData.agreement)}
-              className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
-                formData.agreement
-                  ? "border-green-500 bg-green-500/10 text-green-400"
-                  : "border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                    formData.agreement ? "border-green-500 bg-green-500" : "border-gray-500"
-                  }`}
-                >
-                  {formData.agreement && (
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                      formData.agreement ? "border-green-500 bg-green-500" : "border-gray-500"
+                    }`}
+                  >
+                    {formData.agreement && (
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-left">I understand and agree to the terms and conditions</span>
                 </div>
-                <span className="text-left">I understand and agree to the terms and conditions</span>
-              </div>
-            </button>
-          </div>
+              </button>
+            </div>
 
-          <div className="flex justify-center gap-2 py-4">
-            {[1, 2, 3, 4, 5, 6, 7].map((dot) => (
-              <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-white" : "bg-gray-600"}`} />
-            ))}
-          </div>
+            <div className="flex justify-center gap-2 py-4">
+              {[1, 2, 3, 4, 5, 6, 7].map((dot) => (
+                <div key={dot} className={`w-2 h-2 rounded-full ${dot === 1 ? "bg-white" : "bg-gray-600"}`} />
+              ))}
+            </div>
 
-          {formData.agreement && (
-            <Button
-              onClick={nextStep}
-              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl animate-in slide-in-from-bottom-4 duration-300"
-            >
-              Continue
-            </Button>
-          )}
+            {formData.agreement && (
+              <Button
+                onClick={nextStep}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl animate-in slide-in-from-bottom-4 duration-300"
+              >
+                Continue
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return renderStep()
 }
 
 function DashboardScreen() {
