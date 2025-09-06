@@ -30,6 +30,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("dashboard")
 
+  const [profileName, setProfileName] = useState("")
+
   // Chat states for AI Coach
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
   const [inputMessage, setInputMessage] = useState("")
@@ -72,6 +74,7 @@ export default function DashboardPage() {
       }
 
       setUser(user)
+      setProfileName(user?.user_metadata?.name || "")
       setLoading(false)
     }
 
@@ -529,7 +532,7 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Name</label>
-                <Input value={user?.user_metadata?.name || ""} placeholder="Your name" />
+                <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} placeholder="Your name" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Email</label>
