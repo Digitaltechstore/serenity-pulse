@@ -691,7 +691,7 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
-          <CardHeader>
+          <CardHeader className="border rounded px-2 py-1 text-white">
             <CardTitle style={{ color: "var(--theme-text)" }}>Daily Health Tracking</CardTitle>
             <div className="flex items-center gap-2" style={{ color: "var(--theme-text-secondary)" }}>
               <Calendar className="h-4 w-4" />
@@ -699,7 +699,7 @@ export default function DashboardPage() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="border rounded px-2 py-1"
+                className="border rounded px-2 py-1 text-white"
               />
             </div>
           </CardHeader>
@@ -720,7 +720,7 @@ export default function DashboardPage() {
 
             {currentStep === 0 && (
               <div>
-                <h3 className="font-semibold mb-4">Stool Tracking (Bristol Scale)</h3>
+                <h3 className="font-semibold mb-4 text-white">Stool Tracking (Bristol Scale)</h3>
                 <div className="grid grid-cols-1 gap-3 mb-4">
                   {[
                     { type: 1, desc: "Separate hard lumps", icon: "🔴" },
@@ -740,8 +740,8 @@ export default function DashboardPage() {
                     >
                       <span className="text-2xl">{icon}</span>
                       <div>
-                        <div className="font-medium">Type {type}</div>
-                        <div className="text-sm text-gray-600">{desc}</div>
+                        <div className="font-medium text-white">Type {type}</div>
+                        <div className="text-sm text-white">{desc}</div>
                       </div>
                     </button>
                   ))}
