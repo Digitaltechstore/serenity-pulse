@@ -41,65 +41,63 @@ export default function DashboardPage() {
 
   const [currentTheme, setCurrentTheme] = useState("normal")
 
-  // Theme definitions with exact gut health-inspired color palettes using HSL values
   const themes = {
     light: {
       name: "Soothing Sage",
-      colors: {
-        primary: "hsl(142, 45%, 65%)", // Sage Green
-        secondary: "hsl(85, 35%, 75%)", // Soft Lime
-        accent: "hsl(155, 28%, 65%)", // Health Green
-        background: "hsl(120, 15%, 92%)", // Pale Sage
-        surface: "hsl(120, 20%, 95%)", // Lighter Sage
-        text: "hsl(15, 60%, 20%)", // Darker text for better contrast
-        textSecondary: "hsl(15, 60%, 30%)", // Darker secondary text
-        border: "hsl(120, 25%, 85%)", // Sage Border
-        danger: "hsl(15, 60%, 45%)", // Earthy Brown
-        success: "hsl(155, 28%, 65%)", // Healthy Sage
-        warning: "hsl(45, 85%, 65%)", // Gentle Yellow
-      },
-    },
-    dark: {
-      name: "Dark Mode",
-      colors: {
-        primary: "hsl(280, 45%, 70%)", // Bright Lavender
-        secondary: "hsl(160, 40%, 65%)", // Soft Green
-        accent: "hsl(280, 40%, 60%)", // Medium Lavender
-        background: "hsl(280, 35%, 12%)", // Deep Purple
-        surface: "hsl(280, 30%, 15%)", // Dark Purple
-        text: "hsl(0, 0%, 95%)", // Pure White Text
-        textSecondary: "hsl(0, 0%, 85%)", // Light Gray Text
-        border: "hsl(280, 25%, 25%)", // Purple Border
-        danger: "hsl(20, 70%, 55%)", // Warm Orange
-        success: "hsl(160, 40%, 65%)", // Soft Green
-        warning: "hsl(45, 85%, 65%)", // Bright Yellow
-      },
+      primary: "hsl(142, 45%, 35%)", // Dark sage green
+      primaryDark: "hsl(15, 60%, 25%)", // Dark earthy brown
+      accent: "hsl(85, 35%, 45%)", // Darker lime
+      background: "hsl(120, 15%, 98%)", // Very light sage
+      surface: "hsl(120, 20%, 95%)", // Light sage
+      text: "hsl(0, 0%, 15%)", // Dark gray text
+      textSecondary: "hsl(0, 0%, 35%)", // Medium gray text
+      border: "hsl(120, 15%, 85%)", // Light border
+      success: "hsl(142, 50%, 40%)", // Dark green
+      successBg: "hsl(142, 50%, 95%)", // Light green background
+      danger: "hsl(15, 60%, 40%)", // Dark red-brown
+      dangerBg: "hsl(15, 60%, 95%)", // Light red background
     },
     normal: {
       name: "Berry Gut",
-      colors: {
-        primary: "hsl(338, 70%, 72%)", // Berry Pink
-        secondary: "hsl(155, 28%, 65%)", // Eucalyptus Green
-        accent: "hsl(338, 60%, 60%)", // Medium Berry
-        background: "hsl(15, 55%, 87%)", // Soft Peach-Beige
-        surface: "hsl(15, 55%, 91%)", // Light Peach-Beige
-        text: "hsl(0, 0%, 5%)", // Nearly black text for maximum contrast
-        textSecondary: "hsl(0, 0%, 15%)", // Very dark gray for secondary text
-        border: "hsl(15, 45%, 80%)", // Peach Border
-        danger: "hsl(345, 60%, 38%)", // Deep Berry
-        success: "hsl(155, 28%, 65%)", // Eucalyptus Green
-        warning: "hsl(45, 85%, 58%)", // Warm Yellow
-      },
+      primary: "hsl(338, 70%, 45%)", // Darker berry pink
+      primaryDark: "hsl(345, 60%, 25%)", // Very dark berry
+      accent: "hsl(155, 28%, 35%)", // Dark eucalyptus green
+      background: "hsl(15, 55%, 95%)", // Very light peach-beige
+      surface: "hsl(15, 55%, 92%)", // Light peach-beige
+      text: "hsl(0, 0%, 10%)", // Very dark gray text
+      textSecondary: "hsl(0, 0%, 30%)", // Dark gray text
+      border: "hsl(15, 55%, 80%)", // Warm border
+      success: "hsl(155, 28%, 35%)", // Dark green
+      successBg: "hsl(155, 28%, 95%)", // Light green background
+      danger: "hsl(345, 60%, 35%)", // Dark berry
+      dangerBg: "hsl(345, 60%, 95%)", // Light berry background
+    },
+    dark: {
+      name: "Dark Mode",
+      primary: "hsl(280, 45%, 70%)", // Bright lavender
+      primaryDark: "hsl(20, 70%, 55%)", // Warm orange
+      accent: "hsl(160, 40%, 65%)", // Soft green
+      background: "hsl(280, 35%, 8%)", // Very deep purple
+      surface: "hsl(280, 30%, 12%)", // Dark purple
+      text: "hsl(0, 0%, 95%)", // Very light text
+      textSecondary: "hsl(0, 0%, 75%)", // Light gray text
+      border: "hsl(280, 30%, 20%)", // Dark border
+      success: "hsl(160, 40%, 65%)", // Light green
+      successBg: "hsl(160, 40%, 15%)", // Dark green background
+      danger: "hsl(20, 70%, 55%)", // Orange
+      dangerBg: "hsl(20, 70%, 15%)", // Dark orange background
     },
   }
 
-  // Apply theme styles
   const applyTheme = (themeName: string) => {
     const theme = themes[themeName as keyof typeof themes]
     if (theme) {
       const root = document.documentElement
-      Object.entries(theme.colors).forEach(([key, value]) => {
-        root.style.setProperty(`--theme-${key}`, value)
+      Object.entries(theme).forEach(([key, value]) => {
+        if (key !== "name") {
+          // Skip the name property
+          root.style.setProperty(`--theme-${key}`, value)
+        }
       })
     }
   }
@@ -243,15 +241,11 @@ export default function DashboardPage() {
     try {
       console.log("[v0] Starting camera initialization...")
 
-      // First, check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error("Camera not supported in this browser")
       }
 
-      // On mobile, we need to request permissions first before enumerating devices
-      // Try different camera configurations in order of preference
       const cameraConfigs = [
-        // First try rear camera (ideal for food scanning)
         {
           video: {
             facingMode: { ideal: "environment" },
@@ -259,7 +253,6 @@ export default function DashboardPage() {
             height: { ideal: 720 },
           },
         },
-        // Fallback to front camera
         {
           video: {
             facingMode: { ideal: "user" },
@@ -267,14 +260,12 @@ export default function DashboardPage() {
             height: { ideal: 720 },
           },
         },
-        // Fallback to any available camera
         {
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
           },
         },
-        // Basic fallback
         {
           video: true,
         },
@@ -287,7 +278,7 @@ export default function DashboardPage() {
         try {
           console.log("[v0] Trying camera config:", config)
           stream = await navigator.mediaDevices.getUserMedia(config)
-          console.log("[v0] Camera started successfully with config")
+          console.log("[v0] Camera started successfully")
           break
         } catch (error) {
           console.log("[v0] Camera config failed:", error.message)
@@ -297,81 +288,73 @@ export default function DashboardPage() {
       }
 
       if (!stream) {
-        throw lastError || new Error("Unable to access camera with any configuration")
-      }
-
-      // Now that we have a stream, we can enumerate devices if needed
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-        const videoDevices = devices.filter((device) => device.kind === "videoinput")
-        console.log("[v0] Available video devices after permission:", videoDevices.length)
-      } catch (e) {
-        console.log("[v0] Device enumeration failed, but camera is working:", e)
+        throw lastError || new Error("Unable to access camera")
       }
 
       setCameraStream(stream)
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        // Ensure video plays on mobile
-        videoRef.current.setAttribute("playsinline", "true")
-        videoRef.current.setAttribute("autoplay", "true")
-        videoRef.current.setAttribute("muted", "true")
-
-        try {
-          await videoRef.current.play()
-          console.log("[v0] Video playing successfully")
-        } catch (playError) {
-          console.log("[v0] Video play error:", playError)
-          // Try to play again after a short delay
-          setTimeout(() => {
-            if (videoRef.current) {
-              videoRef.current.play().catch((e) => console.log("[v0] Retry play failed:", e))
-            }
-          }, 100)
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play()
+          console.log("[v0] Video stream connected and playing")
         }
       }
     } catch (error) {
-      console.error("[v0] Camera error:", error)
-      let errorMessage = "Camera access failed. "
-
-      if (error.name === "NotFoundError" || error.message.includes("not found")) {
-        errorMessage += "No camera device found. Please ensure your device has a camera and try refreshing the page."
-      } else if (error.name === "NotAllowedError") {
-        errorMessage +=
-          "Camera permission denied. Please allow camera access in your browser settings and refresh the page."
-      } else if (error.name === "NotSupportedError") {
-        errorMessage += "Camera not supported in this browser. Please try using Chrome or Safari."
-      } else if (error.name === "NotReadableError") {
-        errorMessage += "Camera is being used by another application. Please close other camera apps and try again."
-      } else {
-        errorMessage += "Please check your camera permissions and try again. Make sure you're using HTTPS."
-      }
-
-      alert(errorMessage)
+      console.error("Camera error:", error)
+      alert(`Camera error: ${error.message}`)
     }
   }
 
   const capturePhoto = async () => {
-    if (videoRef.current && cameraStream) {
+    if (!videoRef.current || !cameraStream) {
+      console.error("[v0] Video element or camera stream not available")
+      return
+    }
+
+    try {
+      console.log("[v0] Capturing photo from video stream")
+
       const canvas = document.createElement("canvas")
-      canvas.width = videoRef.current.videoWidth
-      canvas.height = videoRef.current.videoHeight
+      const video = videoRef.current
+
+      // Ensure video has loaded and has dimensions
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        throw new Error("Video not ready for capture")
+      }
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
       const ctx = canvas.getContext("2d")
-      ctx?.drawImage(videoRef.current, 0, 0)
+      if (!ctx) {
+        throw new Error("Could not get canvas context")
+      }
+
+      // Draw the current video frame to canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      // Convert to base64 image data
       const imageData = canvas.toDataURL("image/jpeg", 0.8)
+      console.log("[v0] Image captured successfully, size:", imageData.length)
+
       setCapturedImage(imageData)
 
-      // Stop camera
+      // Stop camera after capture
       cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
 
-      // Analyze food with DeepSeek API
+      console.log("[v0] Starting food analysis with captured image")
       await analyzeFoodImage(imageData)
+    } catch (error) {
+      console.error("[v0] Photo capture error:", error)
+      alert(`Failed to capture photo: ${error.message}`)
     }
   }
 
   const analyzeFoodImage = async (imageData: string) => {
     try {
+      console.log("[v0] Analyzing food image...")
       setAnalysisResult("Analyzing your food for gut health recommendations...")
 
       const response = await fetch("/api/analyze-food", {
@@ -384,14 +367,20 @@ export default function DashboardPage() {
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log("[v0] Analysis completed")
+
       if (data.analysis) {
         setAnalysisResult(data.analysis)
       } else {
         setAnalysisResult("Unable to analyze the image. Please try capturing a clearer photo of your food.")
       }
     } catch (error) {
-      console.error("Food analysis error:", error)
+      console.error("[v0] Food analysis error:", error)
       setAnalysisResult("Analysis failed. Please check your connection and try again.")
     }
   }
@@ -1315,33 +1304,27 @@ export default function DashboardPage() {
                     currentTheme === key ? "ring-2" : ""
                   }`}
                   style={{
-                    backgroundColor: theme.colors.background,
-                    borderColor: currentTheme === key ? theme.colors.primary : theme.colors.border,
-                    ringColor: theme.colors.primary,
+                    backgroundColor: theme.background,
+                    borderColor: currentTheme === key ? theme.primary : theme.border,
+                    ringColor: theme.primary,
                   }}
                   onClick={() => setCurrentTheme(key)}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium" style={{ color: theme.colors.text }}>
+                      <h4 className="font-medium" style={{ color: theme.text }}>
                         {theme.name}
                       </h4>
                       <div className="flex space-x-2 mt-2">
-                        <div
-                          className="w-4 h-4 rounded-full border"
-                          style={{ backgroundColor: theme.colors.primary }}
-                        />
-                        <div
-                          className="w-4 h-4 rounded-full border"
-                          style={{ backgroundColor: theme.colors.secondary }}
-                        />
-                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.colors.accent }} />
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.primary }} />
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.primaryDark }} />
+                        <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: theme.accent }} />
                       </div>
                     </div>
                     {currentTheme === key && (
                       <div
                         className="w-6 h-6 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: theme.colors.primary }}
+                        style={{ backgroundColor: theme.primary }}
                       >
                         <div className="w-2 h-2 bg-white rounded-full" />
                       </div>
