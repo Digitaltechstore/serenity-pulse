@@ -1,18 +1,46 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SplashScreen() {
   const router = useRouter()
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push("/onboarding")
-    }, 3000)
+    const checkAuthAndRedirect = async () => {
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
 
-    return () => clearTimeout(timer)
+        if (user && !error) {
+          // User is authenticated, redirect to dashboard
+          setTimeout(() => {
+            router.push("/dashboard")
+          }, 3000)
+        } else {
+          // User is not authenticated, redirect to onboarding
+          setTimeout(() => {
+            router.push("/onboarding")
+          }, 3000)
+        }
+      } catch (error) {
+        console.error("[v0] Auth check failed:", error)
+        // If auth check fails, default to onboarding flow
+        setTimeout(() => {
+          router.push("/onboarding")
+        }, 3000)
+      } finally {
+        setIsChecking(false)
+      }
+    }
+
+    checkAuthAndRedirect()
   }, [router])
 
   return (
