@@ -144,19 +144,38 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        console.log("[v0] Attempting to check user authentication")
+        const supabase = createClient()
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
 
-      if (!user) {
-        router.push("/login")
-        return
+        if (error) {
+          console.error("[v0] Supabase auth error:", error)
+          // Don't redirect on network errors, allow offline usage
+          if (error.message?.includes("fetch")) {
+            console.log("[v0] Network error detected, allowing offline access")
+            setLoading(false)
+            return
+          }
+        }
+
+        if (!user) {
+          console.log("[v0] No user found, redirecting to login")
+          router.push("/login")
+          return
+        }
+
+        console.log("[v0] User authenticated successfully")
+        setUser(user)
+        setProfileName(user?.user_metadata?.name || "")
+        setLoading(false)
+      } catch (error) {
+        console.error("[v0] Authentication check failed:", error)
+        setLoading(false)
       }
-
-      setUser(user)
-      setProfileName(user?.user_metadata?.name || "")
-      setLoading(false)
     }
 
     checkUser()
@@ -167,9 +186,15 @@ export default function DashboardPage() {
   }, [messages])
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/splash-screen")
+    try {
+      console.log("[v0] Attempting logout")
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push("/splash-screen")
+    } catch (error) {
+      console.error("[v0] Logout failed:", error)
+      router.push("/splash-screen")
+    }
   }
 
   const sendMessage = async () => {
