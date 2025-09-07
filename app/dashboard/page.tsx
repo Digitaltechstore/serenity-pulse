@@ -570,9 +570,9 @@ export default function DashboardPage() {
       {!cameraStream && !capturedImage && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-8 text-center">
-            <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Scan Your Food</h3>
-            <p className="text-gray-600 mb-6">Take a photo of your meal to get gut health recommendations</p>
+            <Camera className="h-16 w-16 mx-auto mb-4 text-white" />
+            <h3 className="text-lg font-semibold mb-2 text-white">Scan Your Food</h3>
+            <p className="mb-6 text-white">Take a photo of your meal to get gut health recommendations</p>
             <Button onClick={startCamera} className="bg-green-600 hover:bg-green-700">
               <Camera className="h-4 w-4 mr-2" />
               Start Camera
