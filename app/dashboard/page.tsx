@@ -241,28 +241,86 @@ export default function DashboardPage() {
 
   const startCamera = async () => {
     try {
-      // Request camera permission explicitly
-      const permission = await navigator.permissions.query({ name: "camera" as PermissionName })
+      console.log("[v0] Starting camera initialization...")
 
-      if (permission.state === "denied") {
-        alert("Camera permission is required to scan food. Please enable camera access in your browser settings.")
-        return
+      // First, check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera not supported in this browser")
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+      // Get available video devices
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevices = devices.filter((device) => device.kind === "videoinput")
+      console.log("[v0] Available video devices:", videoDevices.length)
+
+      if (videoDevices.length === 0) {
+        throw new Error("No camera devices found")
+      }
+
+      // Try different camera configurations in order of preference
+      const cameraConfigs = [
+        // First try rear camera (ideal for food scanning)
+        {
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         },
-      })
+        // Fallback to any available camera
+        {
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        // Basic fallback
+        {
+          video: true,
+        },
+      ]
+
+      let stream = null
+      let lastError = null
+
+      for (const config of cameraConfigs) {
+        try {
+          console.log("[v0] Trying camera config:", config)
+          stream = await navigator.mediaDevices.getUserMedia(config)
+          console.log("[v0] Camera started successfully")
+          break
+        } catch (error) {
+          console.log("[v0] Camera config failed:", error.message)
+          lastError = error
+          continue
+        }
+      }
+
+      if (!stream) {
+        throw lastError || new Error("Unable to access camera with any configuration")
+      }
+
       setCameraStream(stream)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
+        // Ensure video plays
+        videoRef.current.play().catch((e) => console.log("[v0] Video play error:", e))
       }
     } catch (error) {
-      console.error("Camera error:", error)
-      alert("Camera access denied or not available. Please check your browser permissions and try again.")
+      console.error("[v0] Camera error:", error)
+      let errorMessage = "Camera access failed. "
+
+      if (error.name === "NotFoundError" || error.message.includes("not found")) {
+        errorMessage += "No camera device found. Please ensure your device has a camera."
+      } else if (error.name === "NotAllowedError") {
+        errorMessage += "Camera permission denied. Please allow camera access and try again."
+      } else if (error.name === "NotSupportedError") {
+        errorMessage += "Camera not supported in this browser."
+      } else {
+        errorMessage += "Please check your camera permissions and try again."
+      }
+
+      alert(errorMessage)
     }
   }
 
