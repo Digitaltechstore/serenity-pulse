@@ -83,8 +83,8 @@ export default function DashboardPage() {
         accent: "hsl(338, 60%, 60%)", // Medium Berry
         background: "hsl(15, 55%, 87%)", // Soft Peach-Beige
         surface: "hsl(15, 55%, 91%)", // Light Peach-Beige
-        text: "hsl(345, 60%, 15%)", // Much darker text for better contrast
-        textSecondary: "hsl(345, 60%, 25%)", // Darker secondary text
+        text: "hsl(0, 0%, 5%)", // Nearly black text for maximum contrast
+        textSecondary: "hsl(0, 0%, 15%)", // Very dark gray for secondary text
         border: "hsl(15, 45%, 80%)", // Peach Border
         danger: "hsl(345, 60%, 38%)", // Deep Berry
         success: "hsl(155, 28%, 65%)", // Eucalyptus Green
@@ -147,34 +147,41 @@ export default function DashboardPage() {
       try {
         console.log("[v0] Attempting to check user authentication")
         const supabase = createClient()
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser()
 
-        if (error) {
-          console.error("[v0] Supabase auth error:", error)
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("[v0] Supabase session error:", sessionError)
+          // Handle specific session errors
+          if (sessionError.message?.includes("session") || sessionError.message?.includes("Auth")) {
+            console.log("[v0] Session expired or missing, redirecting to login")
+            router.push("/login")
+            return
+          }
           // Don't redirect on network errors, allow offline usage
-          if (error.message?.includes("fetch")) {
+          if (sessionError.message?.includes("fetch")) {
             console.log("[v0] Network error detected, allowing offline access")
             setLoading(false)
             return
           }
         }
 
-        if (!user) {
-          console.log("[v0] No user found, redirecting to login")
+        if (!session?.user) {
+          console.log("[v0] No user session found, redirecting to login")
           router.push("/login")
           return
         }
 
         console.log("[v0] User authenticated successfully")
-        setUser(user)
-        setProfileName(user?.user_metadata?.name || "")
+        setUser(session.user)
+        setProfileName(session.user?.user_metadata?.name || "")
         setLoading(false)
       } catch (error) {
         console.error("[v0] Authentication check failed:", error)
-        setLoading(false)
+        router.push("/login")
       }
     }
 
@@ -1329,7 +1336,14 @@ export default function DashboardPage() {
                 activeTab === tab.id ? "opacity-100" : "opacity-60"
               }`}
               style={{
-                color: activeTab === tab.id ? "var(--theme-primary)" : "var(--theme-textSecondary)",
+                color:
+                  activeTab === tab.id
+                    ? currentTheme === "dark"
+                      ? "var(--theme-primary)"
+                      : "#1f2937" // Dark gray for active tab
+                    : currentTheme === "dark"
+                      ? "var(--theme-textSecondary)"
+                      : "#374151", // Darker gray for inactive tab
               }}
             >
               <tab.icon className="h-6 w-6" />
