@@ -916,8 +916,8 @@ export default function DashboardPage() {
           <Shield className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Gut Guardian AI</h2>
-          <p className="text-sm text-gray-600">Your personal digestive health advisor</p>
+          <h2 className="text-2xl font-bold text-white">Gut Guardian AI</h2>
+          <p className="text-sm text-white">Your personal digestive health advisor</p>
         </div>
       </div>
 
@@ -932,8 +932,8 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-full mx-auto mb-4">
                   <Shield className="h-8 w-8 text-green-600" />
                 </div>
-                <p className="font-medium">Welcome to Gut Guardian AI</p>
-                <p className="text-sm">Ask me anything about digestive health, nutrition, or wellness!</p>
+                <p className="font-medium text-white">Welcome to Gut Guardian AI</p>
+                <p className="text-sm text-white">Ask me anything about digestive health, nutrition, or wellness!</p>
               </div>
             )}
 
