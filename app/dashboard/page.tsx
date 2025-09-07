@@ -234,8 +234,20 @@ export default function DashboardPage() {
 
   const startCamera = async () => {
     try {
+      // Request camera permission explicitly
+      const permission = await navigator.permissions.query({ name: "camera" as PermissionName })
+
+      if (permission.state === "denied") {
+        alert("Camera permission is required to scan food. Please enable camera access in your browser settings.")
+        return
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
       })
       setCameraStream(stream)
       if (videoRef.current) {
@@ -243,28 +255,52 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Camera error:", error)
-      alert("Camera access denied or not available")
+      alert("Camera access denied or not available. Please check your browser permissions and try again.")
     }
   }
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (videoRef.current && cameraStream) {
       const canvas = document.createElement("canvas")
       canvas.width = videoRef.current.videoWidth
       canvas.height = videoRef.current.videoHeight
       const ctx = canvas.getContext("2d")
       ctx?.drawImage(videoRef.current, 0, 0)
-      const imageData = canvas.toDataURL("image/jpeg")
+      const imageData = canvas.toDataURL("image/jpeg", 0.8)
       setCapturedImage(imageData)
 
       // Stop camera
       cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
 
-      // Simulate food analysis
-      setTimeout(() => {
-        setAnalysisResult("This appears to be a healthy meal with good fiber content. Suitable for gut health!")
-      }, 2000)
+      // Analyze food with DeepSeek API
+      await analyzeFoodImage(imageData)
+    }
+  }
+
+  const analyzeFoodImage = async (imageData: string) => {
+    try {
+      setAnalysisResult("Analyzing your food for gut health recommendations...")
+
+      const response = await fetch("/api/analyze-food", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: imageData,
+          context:
+            "Analyze this food image for gut health. Provide scientific-based recommendations on whether this food is beneficial or harmful for digestive health, especially for people with gut problems. Include specific nutrients, fiber content, potential triggers, and evidence-based advice.",
+        }),
+      })
+
+      const data = await response.json()
+      if (data.analysis) {
+        setAnalysisResult(data.analysis)
+      } else {
+        setAnalysisResult("Unable to analyze the image. Please try capturing a clearer photo of your food.")
+      }
+    } catch (error) {
+      console.error("Food analysis error:", error)
+      setAnalysisResult("Analysis failed. Please check your connection and try again.")
     }
   }
 
@@ -565,17 +601,50 @@ export default function DashboardPage() {
 
   const renderScanFood = () => (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-white">Scan Food</h2>
+      <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--theme-text)" }}>
+        Scan Food
+      </h2>
 
       {!cameraStream && !capturedImage && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-8 text-center">
-            <Camera className="h-16 w-16 mx-auto mb-4 text-white" />
-            <h3 className="text-lg font-semibold mb-2 text-white">Scan Your Food</h3>
-            <p className="mb-6 text-white">Take a photo of your meal to get gut health recommendations</p>
-            <Button onClick={startCamera} className="bg-green-600 hover:bg-green-700">
+            <div className="mb-6">
+              <Camera className="h-16 w-16 mx-auto mb-4" style={{ color: "var(--theme-primary)" }} />
+              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                Scan Your Food
+              </h3>
+              <p className="mb-6" style={{ color: "var(--theme-text-secondary)" }}>
+                Take a photo of your meal to get personalized gut health recommendations based on scientific research
+              </p>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-xs">i</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
+                    Camera Permission Required
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">
+                    We'll ask for camera access to capture and analyze your food for gut health insights
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              onClick={startCamera}
+              className="w-full"
+              style={{
+                backgroundColor: "var(--theme-primary)",
+                color: "white",
+                border: "none",
+              }}
+            >
               <Camera className="h-4 w-4 mr-2" />
-              Start Camera
+              Start Camera & Scan Food
             </Button>
           </CardContent>
         </Card>
@@ -585,12 +654,27 @@ export default function DashboardPage() {
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-4">
             <div className="relative">
-              <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
+              <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg shadow-lg" />
+              <div className="absolute top-4 left-4 right-4">
+                <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
+                  <p className="text-white text-sm text-center">Position your food in the frame and tap capture</p>
+                </div>
+              </div>
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
-                <Button onClick={capturePhoto} className="bg-green-600 hover:bg-green-700">
+                <Button
+                  onClick={capturePhoto}
+                  size="lg"
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                >
+                  <Camera className="h-5 w-5 mr-2" />
                   Capture
                 </Button>
-                <Button onClick={stopCamera} variant="outline">
+                <Button
+                  onClick={stopCamera}
+                  variant="outline"
+                  size="lg"
+                  className="bg-white/90 hover:bg-white text-gray-800 shadow-lg"
+                >
                   Cancel
                 </Button>
               </div>
@@ -601,29 +685,97 @@ export default function DashboardPage() {
 
       {capturedImage && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
-          <CardContent className="p-4">
-            <img src={capturedImage || "/placeholder.svg"} alt="Captured food" className="w-full rounded-lg mb-4" />
-            {analysisResult ? (
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-green-800 mb-2">Analysis Result:</h4>
-                <p className="text-green-700">{analysisResult}</p>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
+                  Captured Food
+                </h3>
+                <img
+                  src={capturedImage || "/placeholder.svg"}
+                  alt="Captured food"
+                  className="w-full rounded-lg shadow-md border"
+                  style={{ borderColor: "var(--theme-border)" }}
+                />
               </div>
-            ) : (
-              <div className="text-center py-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
-                <p className="text-gray-600">Analyzing your food...</p>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
+                  Gut Health Analysis
+                </h3>
+
+                {analysisResult ? (
+                  <div
+                    className="p-4 rounded-lg border"
+                    style={{
+                      backgroundColor:
+                        analysisResult.includes("beneficial") || analysisResult.includes("good")
+                          ? "var(--theme-success-bg)"
+                          : analysisResult.includes("avoid") || analysisResult.includes("harmful")
+                            ? "var(--theme-danger-bg)"
+                            : "var(--theme-surface)",
+                      borderColor:
+                        analysisResult.includes("beneficial") || analysisResult.includes("good")
+                          ? "var(--theme-success)"
+                          : analysisResult.includes("avoid") || analysisResult.includes("harmful")
+                            ? "var(--theme-danger)"
+                            : "var(--theme-border)",
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-1">
+                        {analysisResult.includes("beneficial") || analysisResult.includes("good") ? (
+                          <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                            <span className="text-white text-sm">✓</span>
+                          </div>
+                        ) : analysisResult.includes("avoid") || analysisResult.includes("harmful") ? (
+                          <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                            <span className="text-white text-sm">!</span>
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                            <span className="text-white text-sm">i</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                          Scientific Analysis Results:
+                        </h4>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--theme-text-secondary)" }}>
+                          {analysisResult}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div
+                      className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
+                      style={{ borderColor: "var(--theme-primary)" }}
+                    ></div>
+                    <p style={{ color: "var(--theme-text-secondary)" }}>
+                      Analyzing your food with scientific research...
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-            <Button
-              onClick={() => {
-                setCapturedImage(null)
-                setAnalysisResult(null)
-              }}
-              variant="outline"
-              className="w-full mt-4"
-            >
-              Scan Another Food
-            </Button>
+
+              <Button
+                onClick={() => {
+                  setCapturedImage(null)
+                  setAnalysisResult(null)
+                }}
+                variant="outline"
+                className="w-full"
+                style={{
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                Scan Another Food
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
