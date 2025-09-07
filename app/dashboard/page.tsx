@@ -706,7 +706,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="mb-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Step {currentStep + 1} of 5</span>
+                <span className="text-sm font-medium text-white">Step {currentStep + 1} of 5</span>
                 <div className="flex space-x-1">
                   {[0, 1, 2, 3, 4].map((step) => (
                     <div
