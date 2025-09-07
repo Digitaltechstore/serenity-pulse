@@ -248,21 +248,21 @@ export default function DashboardPage() {
         throw new Error("Camera not supported in this browser")
       }
 
-      // Get available video devices
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter((device) => device.kind === "videoinput")
-      console.log("[v0] Available video devices:", videoDevices.length)
-
-      if (videoDevices.length === 0) {
-        throw new Error("No camera devices found")
-      }
-
+      // On mobile, we need to request permissions first before enumerating devices
       // Try different camera configurations in order of preference
       const cameraConfigs = [
         // First try rear camera (ideal for food scanning)
         {
           video: {
             facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+        },
+        // Fallback to front camera
+        {
+          video: {
+            facingMode: { ideal: "user" },
             width: { ideal: 1280 },
             height: { ideal: 720 },
           },
@@ -287,7 +287,7 @@ export default function DashboardPage() {
         try {
           console.log("[v0] Trying camera config:", config)
           stream = await navigator.mediaDevices.getUserMedia(config)
-          console.log("[v0] Camera started successfully")
+          console.log("[v0] Camera started successfully with config")
           break
         } catch (error) {
           console.log("[v0] Camera config failed:", error.message)
@@ -300,24 +300,51 @@ export default function DashboardPage() {
         throw lastError || new Error("Unable to access camera with any configuration")
       }
 
+      // Now that we have a stream, we can enumerate devices if needed
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const videoDevices = devices.filter((device) => device.kind === "videoinput")
+        console.log("[v0] Available video devices after permission:", videoDevices.length)
+      } catch (e) {
+        console.log("[v0] Device enumeration failed, but camera is working:", e)
+      }
+
       setCameraStream(stream)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        // Ensure video plays
-        videoRef.current.play().catch((e) => console.log("[v0] Video play error:", e))
+        // Ensure video plays on mobile
+        videoRef.current.setAttribute("playsinline", "true")
+        videoRef.current.setAttribute("autoplay", "true")
+        videoRef.current.setAttribute("muted", "true")
+
+        try {
+          await videoRef.current.play()
+          console.log("[v0] Video playing successfully")
+        } catch (playError) {
+          console.log("[v0] Video play error:", playError)
+          // Try to play again after a short delay
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.play().catch((e) => console.log("[v0] Retry play failed:", e))
+            }
+          }, 100)
+        }
       }
     } catch (error) {
       console.error("[v0] Camera error:", error)
       let errorMessage = "Camera access failed. "
 
       if (error.name === "NotFoundError" || error.message.includes("not found")) {
-        errorMessage += "No camera device found. Please ensure your device has a camera."
+        errorMessage += "No camera device found. Please ensure your device has a camera and try refreshing the page."
       } else if (error.name === "NotAllowedError") {
-        errorMessage += "Camera permission denied. Please allow camera access and try again."
+        errorMessage +=
+          "Camera permission denied. Please allow camera access in your browser settings and refresh the page."
       } else if (error.name === "NotSupportedError") {
-        errorMessage += "Camera not supported in this browser."
+        errorMessage += "Camera not supported in this browser. Please try using Chrome or Safari."
+      } else if (error.name === "NotReadableError") {
+        errorMessage += "Camera is being used by another application. Please close other camera apps and try again."
       } else {
-        errorMessage += "Please check your camera permissions and try again."
+        errorMessage += "Please check your camera permissions and try again. Make sure you're using HTTPS."
       }
 
       alert(errorMessage)
