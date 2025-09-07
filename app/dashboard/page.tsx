@@ -702,7 +702,9 @@ export default function DashboardPage() {
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-xs">i</span>
+                  <span className="text-xs" style={{ color: "var(--theme-text)" }}>
+                    i
+                  </span>
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
@@ -738,7 +740,9 @@ export default function DashboardPage() {
               <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg shadow-lg" />
               <div className="absolute top-4 left-4 right-4">
                 <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-                  <p className="text-white text-sm text-center">Position your food in the frame and tap capture</p>
+                  <p className="text-sm text-center" style={{ color: "var(--theme-text)" }}>
+                    Position your food in the frame and tap capture
+                  </p>
                 </div>
               </div>
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
@@ -807,15 +811,21 @@ export default function DashboardPage() {
                       <div className="flex-shrink-0 mt-1">
                         {analysisResult.includes("beneficial") || analysisResult.includes("good") ? (
                           <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                            <span className="text-white text-sm">✓</span>
+                            <span className="text-sm" style={{ color: "white" }}>
+                              ✓
+                            </span>
                           </div>
                         ) : analysisResult.includes("avoid") || analysisResult.includes("harmful") ? (
                           <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                            <span className="text-white text-sm">!</span>
+                            <span className="text-sm" style={{ color: "white" }}>
+                              !
+                            </span>
                           </div>
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-white text-sm">i</span>
+                            <span className="text-sm" style={{ color: "white" }}>
+                              i
+                            </span>
                           </div>
                         )}
                       </div>
@@ -866,7 +876,9 @@ export default function DashboardPage() {
   const renderLogs = () => (
     <div className="max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Health Log</h2>
+        <h2 className="text-2xl font-bold" style={{ color: "var(--theme-text)" }}>
+          Health Log
+        </h2>
         <div className="flex gap-2">
           <Button onClick={() => setShowTrends(!showTrends)} variant="outline" className="bg-transparent">
             {showTrends ? "Daily Log" : "View Trends"}
@@ -924,7 +936,7 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
-          <CardHeader className="border rounded px-2 py-1 text-white">
+          <CardHeader className="border rounded px-2 py-1" style={{ color: "var(--theme-text)" }}>
             <CardTitle style={{ color: "var(--theme-text)" }}>Daily Health Tracking</CardTitle>
             <div className="flex items-center gap-2" style={{ color: "var(--theme-text-secondary)" }}>
               <Calendar className="h-4 w-4" />
@@ -932,14 +944,17 @@ export default function DashboardPage() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="border rounded px-2 py-1 text-white"
+                className="border rounded px-2 py-1"
+                style={{ color: "var(--theme-text)" }}
               />
             </div>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-white">Step {currentStep + 1} of 5</span>
+                <span className="text-sm font-medium" style={{ color: "var(--theme-text)" }}>
+                  Step {currentStep + 1} of 5
+                </span>
                 <div className="flex space-x-1">
                   {[0, 1, 2, 3, 4].map((step) => (
                     <div
@@ -953,7 +968,9 @@ export default function DashboardPage() {
 
             {currentStep === 0 && (
               <div>
-                <h3 className="font-semibold mb-4 text-white">Stool Tracking (Bristol Scale)</h3>
+                <h3 className="font-semibold mb-4" style={{ color: "var(--theme-text)" }}>
+                  Stool Tracking (Bristol Scale)
+                </h3>
                 <div className="grid grid-cols-1 gap-3 mb-4">
                   {[
                     { type: 1, desc: "Separate hard lumps", icon: "🔴" },
@@ -973,8 +990,12 @@ export default function DashboardPage() {
                     >
                       <span className="text-2xl">{icon}</span>
                       <div>
-                        <div className="font-medium text-white">Type {type}</div>
-                        <div className="text-sm text-white">{desc}</div>
+                        <div className="font-medium" style={{ color: "var(--theme-text)" }}>
+                          Type {type}
+                        </div>
+                        <div className="text-sm" style={{ color: "var(--theme-textSecondary)" }}>
+                          {desc}
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -1146,11 +1167,15 @@ export default function DashboardPage() {
     <div className="max-w-2xl mx-auto h-full flex flex-col">
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-600 to-blue-600 rounded-full">
-          <Shield className="h-6 w-6 text-white" />
+          <Shield className="h-6 w-6" style={{ color: "var(--theme-text)" }} />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Gut Guardian AI</h2>
-          <p className="text-sm text-white">Your personal digestive health advisor</p>
+          <h2 className="text-2xl font-bold" style={{ color: "var(--theme-text)" }}>
+            Gut Guardian AI
+          </h2>
+          <p className="text-sm" style={{ color: "var(--theme-textSecondary)" }}>
+            Your personal digestive health advisor
+          </p>
         </div>
       </div>
 
@@ -1165,8 +1190,12 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-full mx-auto mb-4">
                   <Shield className="h-8 w-8 text-green-600" />
                 </div>
-                <p className="font-medium text-white">Welcome to Gut Guardian AI</p>
-                <p className="text-sm text-white">Ask me anything about digestive health, nutrition, or wellness!</p>
+                <p className="font-medium" style={{ color: "var(--theme-text)" }}>
+                  Welcome to Gut Guardian AI
+                </p>
+                <p className="text-sm" style={{ color: "var(--theme-textSecondary)" }}>
+                  Ask me anything about digestive health, nutrition, or wellness!
+                </p>
               </div>
             )}
 
@@ -1175,15 +1204,13 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-2 max-w-xs lg:max-w-md">
                   {message.role === "assistant" && (
                     <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-green-600 to-blue-600 rounded-full flex-shrink-0">
-                      <Shield className="h-4 w-4 text-white" />
+                      <Shield className="h-4 w-4" style={{ color: "var(--theme-text)" }} />
                     </div>
                   )}
                   <div
                     className={`px-4 py-2 rounded-lg ${
-                      message.role === "user"
-                        ? "bg-green-600 text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-800 rounded-bl-sm"
-                    }`}
+                      message.role === "user" ? "bg-green-600 rounded-br-sm" : "bg-gray-600 rounded-bl-sm"
+                    } text-white p-2 max-w-xs`}
                   >
                     {message.content}
                   </div>
@@ -1195,7 +1222,7 @@ export default function DashboardPage() {
               <div className="flex justify-start">
                 <div className="flex items-start gap-2">
                   <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-green-600 to-blue-600 rounded-full">
-                    <Shield className="h-4 w-4 text-white" />
+                    <Shield className="h-4 w-4" style={{ color: "var(--theme-text)" }} />
                   </div>
                   <div className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg rounded-bl-sm">
                     <div className="flex space-x-1">
