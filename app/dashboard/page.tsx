@@ -152,18 +152,26 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const n8nWebhookUrl = "https://john09lim.app.n8n.cloud/webhook-test/GUT GUARD AI"
+      const n8nWebhookUrl = "https://john09lim.app.n8n.cloud/webhook-test/GUT%20GUARD%20AI"
+
+      console.log("[v0] Sending image to webhook:", n8nWebhookUrl)
 
       const response = await fetch(n8nWebhookUrl, {
         method: "POST",
         body: formData,
+        headers: {
+          Accept: "application/json",
+        },
       })
+
+      console.log("[v0] Webhook response status:", response.status)
 
       if (!response.ok) {
         throw new Error(`Analysis failed: ${response.status}`)
       }
 
       const data = await response.json()
+      console.log("[v0] Webhook response data:", data)
 
       const result = Array.isArray(data) ? data[0]?.output : data
 
