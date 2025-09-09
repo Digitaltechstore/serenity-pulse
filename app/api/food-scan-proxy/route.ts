@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const webhookFormData = new FormData()
     webhookFormData.append("image", image)
 
-    const webhookUrl = "https://john09lim.app.n8n.cloud/webhook-test/GUT%20GUARD%20AI"
+    const webhookUrl = "https://john09lim.app.n8n.cloud/webhook/GUT%20GUARD%20AI"
     console.log("[v0] Food scan proxy: Sending to webhook:", webhookUrl)
 
     const response = await fetch(webhookUrl, {

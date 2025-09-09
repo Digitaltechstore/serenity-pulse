@@ -473,7 +473,7 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", imageFile)
 
-      const response = await fetch("https://john09lim.app.n8n.cloud/webhook-test/GUT%20GUARD%20AI", {
+      const response = await fetch("https://john09lim.app.n8n.cloud/webhook/GUT%20GUARD%20AI", {
         method: "POST",
         body: formData,
         headers: {
