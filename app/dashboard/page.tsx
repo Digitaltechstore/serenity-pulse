@@ -152,27 +152,23 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const n8nWebhookUrl = "https://john09lim.app.n8n.cloud/webhook-test/GUT%20GUARD%20AI"
+      console.log("[v0] Sending image via server proxy")
 
-      console.log("[v0] Sending image to webhook:", n8nWebhookUrl)
-
-      const response = await fetch(n8nWebhookUrl, {
+      const response = await fetch("/api/food-scan-proxy", {
         method: "POST",
         body: formData,
-        headers: {
-          Accept: "application/json",
-        },
-        mode: "cors",
       })
 
-      console.log("[v0] Webhook response status:", response.status)
+      console.log("[v0] Proxy response status:", response.status)
 
       if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.status}`)
+        const errorText = await response.text()
+        console.log("[v0] Proxy error response:", errorText)
+        throw new Error(`Analysis failed: ${response.status} - ${errorText}`)
       }
 
       const data = await response.json()
-      console.log("[v0] Webhook response data:", data)
+      console.log("[v0] Proxy response data:", data)
 
       if (data && data.output) {
         const output = data.output
@@ -188,8 +184,8 @@ export default function DashboardPage() {
         throw new Error("Unexpected response format")
       }
     } catch (error) {
-      console.error("Food scan error:", error)
-      setScanError(error instanceof Error ? error.message : "Analysis failed. Please try again.")
+      console.error("[v0] Food scan error:", error)
+      setScanError(`Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`)
       setScanState("error")
     }
   }
