@@ -7,9 +7,26 @@ import { Suspense } from "react"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "GutGuard - Your Personal Gut Health Companion",
+  description:
+    "Track your digestive health, scan food for gut-friendly recommendations, and get personalized advice from our AI coach. Your journey to better gut health starts here.",
+  generator: "GutGuard",
+  keywords: "gut health, digestive health, food scanner, health tracking, AI health coach",
+  authors: [{ name: "GutGuard" }],
+  openGraph: {
+    title: "GutGuard - Your Personal Gut Health Companion",
+    description:
+      "Track your digestive health, scan food for gut-friendly recommendations, and get personalized advice from our AI coach.",
+    url: "https://gutguard.online",
+    siteName: "GutGuard",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GutGuard - Your Personal Gut Health Companion",
+    description:
+      "Track your digestive health, scan food for gut-friendly recommendations, and get personalized advice from our AI coach.",
+  },
 }
 
 export default function RootLayout({
