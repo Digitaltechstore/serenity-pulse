@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -27,6 +29,7 @@ import {
   ChevronUp,
   Calendar,
   Palette,
+  Upload,
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -112,11 +115,16 @@ export default function DashboardPage() {
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Camera states for Scan Food
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<string | null>(null)
+  const [detectedFoods, setDetectedFoods] = useState<Array<{ name: string; confidence: number }>>([])
+  const [gutScore, setGutScore] = useState<number | null>(null)
+  const [scoreReasons, setScoreReasons] = useState<string[]>([])
+  const [scoreAdvice, setScoreAdvice] = useState<string>("")
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showFileInput, setShowFileInput] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
@@ -239,132 +247,93 @@ export default function DashboardPage() {
 
   const startCamera = async () => {
     try {
-      console.log("[v0] Starting camera initialization...")
+      console.log("[v0] Starting camera for Food Scan...")
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera not supported in this browser")
       }
 
-      const cameraConfigs = [
-        {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
-        {
-          video: {
-            facingMode: { ideal: "user" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        },
-        {
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        },
-        {
-          video: true,
-        },
-      ]
-
-      let stream = null
-      let lastError = null
-
-      for (const config of cameraConfigs) {
-        try {
-          console.log("[v0] Trying camera config:", config)
-          stream = await navigator.mediaDevices.getUserMedia(config)
-          console.log("[v0] Camera started successfully")
-          break
-        } catch (error) {
-          console.log("[v0] Camera config failed:", error.message)
-          lastError = error
-          continue
-        }
-      }
-
-      if (!stream) {
-        throw lastError || new Error("Unable to access camera")
-      }
+      })
 
       setCameraStream(stream)
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play()
-          console.log("[v0] Video stream connected and playing")
-        }
+        videoRef.current.play()
       }
     } catch (error) {
       console.error("Camera error:", error)
-      alert(`Camera error: ${error.message}`)
+      alert(`Camera access failed: ${error.message}`)
     }
   }
 
   const capturePhoto = async () => {
-    if (!videoRef.current || !cameraStream) {
-      console.error("[v0] Video element or camera stream not available")
-      return
-    }
+    if (!videoRef.current || !cameraStream) return
 
     try {
-      console.log("[v0] Capturing photo from video stream")
-
       const canvas = document.createElement("canvas")
       const video = videoRef.current
-
-      // Ensure video has loaded and has dimensions
-      if (video.videoWidth === 0 || video.videoHeight === 0) {
-        throw new Error("Video not ready for capture")
-      }
 
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
 
       const ctx = canvas.getContext("2d")
-      if (!ctx) {
-        throw new Error("Could not get canvas context")
-      }
+      if (!ctx) throw new Error("Canvas context not available")
 
-      // Draw the current video frame to canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-      // Convert to base64 image data
-      const imageData = canvas.toDataURL("image/jpeg", 0.8)
-      console.log("[v0] Image captured successfully, size:", imageData.length)
+      // Convert to blob for upload
+      canvas.toBlob(
+        async (blob) => {
+          if (blob) {
+            setCapturedImage(URL.createObjectURL(blob))
+            await analyzeFoodWithGemini(blob)
+          }
+        },
+        "image/jpeg",
+        0.8,
+      )
 
-      setCapturedImage(imageData)
-
-      // Stop camera after capture
+      // Stop camera
       cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
-
-      console.log("[v0] Starting food analysis with captured image")
-      await analyzeFoodImage(imageData)
     } catch (error) {
-      console.error("[v0] Photo capture error:", error)
+      console.error("Photo capture error:", error)
       alert(`Failed to capture photo: ${error.message}`)
     }
   }
 
-  const analyzeFoodImage = async (imageData: string) => {
-    try {
-      console.log("[v0] Analyzing food image...")
-      setAnalysisResult("Analyzing your food for gut health recommendations...")
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-      const response = await fetch("/api/analyze-food", {
+    if (file.size > 20 * 1024 * 1024) {
+      alert("File too large. Please select an image under 20MB.")
+      return
+    }
+
+    setCapturedImage(URL.createObjectURL(file))
+    await analyzeFoodWithGemini(file)
+  }
+
+  const analyzeFoodWithGemini = async (imageFile: Blob) => {
+    setIsAnalyzing(true)
+    setDetectedFoods([])
+    setGutScore(null)
+
+    try {
+      const formData = new FormData()
+      formData.append("image", imageFile)
+
+      const response = await fetch("/api/food-scan", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageData,
-          context:
-            "Analyze this food image for gut health. Provide scientific-based recommendations on whether this food is beneficial or harmful for digestive health, especially for people with gut problems. Include specific nutrients, fiber content, potential triggers, and evidence-based advice.",
-        }),
+        body: formData,
       })
 
       if (!response.ok) {
@@ -372,16 +341,88 @@ export default function DashboardPage() {
       }
 
       const data = await response.json()
-      console.log("[v0] Analysis completed")
 
-      if (data.analysis) {
-        setAnalysisResult(data.analysis)
-      } else {
-        setAnalysisResult("Unable to analyze the image. Please try capturing a clearer photo of your food.")
+      setDetectedFoods(data.foods || [])
+      setGutScore(data.score || 0)
+      setScoreReasons(data.reasons || [])
+      setScoreAdvice(data.advice || "")
+    } catch (error) {
+      console.error("Food analysis error:", error)
+      alert("Analysis failed. Please try again.")
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const removeFoodItem = (index: number) => {
+    const newFoods = detectedFoods.filter((_, i) => i !== index)
+    setDetectedFoods(newFoods)
+    recomputeScore(newFoods)
+  }
+
+  const addFoodItem = (foodName: string) => {
+    if (!foodName.trim()) return
+
+    const newFood = { name: foodName.trim(), confidence: 1.0 }
+    const newFoods = [...detectedFoods, newFood]
+    setDetectedFoods(newFoods)
+    recomputeScore(newFoods)
+  }
+
+  const recomputeScore = async (foods: Array<{ name: string; confidence: number }>) => {
+    try {
+      const response = await fetch("/api/food-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ foods }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setGutScore(data.score)
+        setScoreReasons(data.reasons)
+        setScoreAdvice(data.advice)
       }
     } catch (error) {
-      console.error("[v0] Food analysis error:", error)
-      setAnalysisResult("Analysis failed. Please check your connection and try again.")
+      console.error("Score recomputation error:", error)
+    }
+  }
+
+  const saveToGutJournal = async () => {
+    if (!capturedImage || gutScore === null) return
+
+    try {
+      const response = await fetch("/api/save-food-scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: capturedImage,
+          foods: detectedFoods,
+          gutScore,
+          reasons: scoreReasons,
+          advice: scoreAdvice,
+        }),
+      })
+
+      if (response.ok) {
+        alert("Saved to Gut Journal!")
+        resetScan()
+      }
+    } catch (error) {
+      console.error("Save error:", error)
+      alert("Failed to save. Please try again.")
+    }
+  }
+
+  const resetScan = () => {
+    setCapturedImage(null)
+    setDetectedFoods([])
+    setGutScore(null)
+    setScoreReasons([])
+    setScoreAdvice("")
+    setIsAnalyzing(false)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -683,7 +724,7 @@ export default function DashboardPage() {
   const renderScanFood = () => (
     <div className="max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--theme-text)" }}>
-        Scan Food
+        Food Scan
       </h2>
 
       {!cameraStream && !capturedImage && (
@@ -692,43 +733,49 @@ export default function DashboardPage() {
             <div className="mb-6">
               <Camera className="h-16 w-16 mx-auto mb-4" style={{ color: "var(--theme-primary)" }} />
               <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
-                Scan Your Food
+                Scan Your Meal
               </h3>
               <p className="mb-6" style={{ color: "var(--theme-text-secondary)" }}>
-                Take a photo of your meal to get personalized gut health recommendations based on scientific research
+                Take a photo or upload an image to get your personalized Gut Guard Score
               </p>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs" style={{ color: "var(--theme-text)" }}>
-                    i
-                  </span>
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
-                    Camera Permission Required
-                  </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-300">
-                    We'll ask for camera access to capture and analyze your food for gut health insights
-                  </p>
-                </div>
-              </div>
-            </div>
+            <div className="space-y-4">
+              <Button
+                onClick={startCamera}
+                className="w-full"
+                style={{
+                  backgroundColor: "var(--theme-primary)",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo
+              </Button>
 
-            <Button
-              onClick={startCamera}
-              className="w-full"
-              style={{
-                backgroundColor: "var(--theme-primary)",
-                color: "white",
-                border: "none",
-              }}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Start Camera & Scan Food
-            </Button>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="w-full"
+                style={{
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Photo
+              </Button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -737,14 +784,7 @@ export default function DashboardPage() {
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-4">
             <div className="relative">
-              <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg shadow-lg" />
-              <div className="absolute top-4 left-4 right-4">
-                <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3">
-                  <p className="text-sm text-center" style={{ color: "var(--theme-text)" }}>
-                    Position your food in the frame and tap capture
-                  </p>
-                </div>
-              </div>
+              <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg shadow-lg" />
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
                 <Button
                   onClick={capturePhoto}
@@ -773,99 +813,161 @@ export default function DashboardPage() {
           <CardContent className="p-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
-                  Captured Food
-                </h3>
                 <img
                   src={capturedImage || "/placeholder.svg"}
                   alt="Captured food"
-                  className="w-full rounded-lg shadow-md border"
+                  className="w-full rounded-lg shadow-md border max-h-64 object-cover"
                   style={{ borderColor: "var(--theme-border)" }}
                 />
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
-                  Gut Health Analysis
-                </h3>
-
-                {analysisResult ? (
+              {isAnalyzing && (
+                <div className="text-center py-8">
                   <div
-                    className="p-4 rounded-lg border"
-                    style={{
-                      backgroundColor:
-                        analysisResult.includes("beneficial") || analysisResult.includes("good")
-                          ? "var(--theme-success-bg)"
-                          : analysisResult.includes("avoid") || analysisResult.includes("harmful")
-                            ? "var(--theme-danger-bg)"
-                            : "var(--theme-surface)",
-                      borderColor:
-                        analysisResult.includes("beneficial") || analysisResult.includes("good")
-                          ? "var(--theme-success)"
-                          : analysisResult.includes("avoid") || analysisResult.includes("harmful")
-                            ? "var(--theme-danger)"
-                            : "var(--theme-border)",
-                    }}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {analysisResult.includes("beneficial") || analysisResult.includes("good") ? (
-                          <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                            <span className="text-sm" style={{ color: "white" }}>
-                              ✓
-                            </span>
-                          </div>
-                        ) : analysisResult.includes("avoid") || analysisResult.includes("harmful") ? (
-                          <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                            <span className="text-sm" style={{ color: "white" }}>
-                              !
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-sm" style={{ color: "white" }}>
-                              i
-                            </span>
-                          </div>
-                        )}
+                    className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
+                    style={{ borderColor: "var(--theme-primary)" }}
+                  />
+                  <p style={{ color: "var(--theme-text-secondary)" }}>Analyzing your food with AI...</p>
+                </div>
+              )}
+
+              {detectedFoods.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
+                    Detected Foods
+                  </h3>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {detectedFoods.map((food, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 px-3 py-1 rounded-full border"
+                        style={{
+                          backgroundColor: "var(--theme-surface)",
+                          borderColor: "var(--theme-border)",
+                        }}
+                      >
+                        <span className="text-sm" style={{ color: "var(--theme-text)" }}>
+                          {food.name}
+                        </span>
+                        <button onClick={() => removeFoodItem(index)} className="text-red-500 hover:text-red-700">
+                          ×
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
-                          Scientific Analysis Results:
-                        </h4>
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--theme-text-secondary)" }}>
-                          {analysisResult}
-                        </p>
-                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add food item..."
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter") {
+                          addFoodItem(e.currentTarget.value)
+                          e.currentTarget.value = ""
+                        }
+                      }}
+                      style={{
+                        backgroundColor: "var(--theme-surface)",
+                        borderColor: "var(--theme-border)",
+                        color: "var(--theme-text)",
+                      }}
+                    />
+                    <Button
+                      onClick={() => {
+                        const input = document.querySelector(
+                          'input[placeholder="Add food item..."]',
+                        ) as HTMLInputElement
+                        if (input) {
+                          addFoodItem(input.value)
+                          input.value = ""
+                        }
+                      }}
+                      variant="outline"
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {gutScore !== null && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--theme-text)" }}>
+                    Gut Guard Score
+                  </h3>
+
+                  <div className="text-center mb-4">
+                    <div
+                      className="text-4xl font-bold mb-2"
+                      style={{
+                        color: gutScore >= 80 ? "#10b981" : gutScore >= 50 ? "#f59e0b" : "#ef4444",
+                      }}
+                    >
+                      {gutScore}/100
+                    </div>
+                    <div
+                      className="text-sm px-3 py-1 rounded-full inline-block"
+                      style={{
+                        backgroundColor: gutScore >= 80 ? "#dcfce7" : gutScore >= 50 ? "#fef3c7" : "#fee2e2",
+                        color: gutScore >= 80 ? "#166534" : gutScore >= 50 ? "#92400e" : "#991b1b",
+                      }}
+                    >
+                      {gutScore >= 80 ? "Gut Friendly" : gutScore >= 50 ? "Moderate Risk" : "High Risk"}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <div
-                      className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-3"
-                      style={{ borderColor: "var(--theme-primary)" }}
-                    ></div>
-                    <p style={{ color: "var(--theme-text-secondary)" }}>
-                      Analyzing your food with scientific research...
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              <Button
-                onClick={() => {
-                  setCapturedImage(null)
-                  setAnalysisResult(null)
-                }}
-                variant="outline"
-                className="w-full"
-                style={{
-                  borderColor: "var(--theme-border)",
-                  color: "var(--theme-text)",
-                }}
-              >
-                Scan Another Food
-              </Button>
+                  {scoreReasons.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                        Reasons:
+                      </h4>
+                      <ul className="space-y-1">
+                        {scoreReasons.map((reason, index) => (
+                          <li key={index} className="text-sm flex items-start gap-2">
+                            <span className="text-red-500 mt-1">•</span>
+                            <span style={{ color: "var(--theme-text-secondary)" }}>{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {scoreAdvice && (
+                    <div className="mb-4">
+                      <h4 className="font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                        Advice:
+                      </h4>
+                      <p className="text-sm" style={{ color: "var(--theme-text-secondary)" }}>
+                        {scoreAdvice}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={saveToGutJournal}
+                      className="flex-1"
+                      style={{
+                        backgroundColor: "var(--theme-primary)",
+                        color: "white",
+                        border: "none",
+                      }}
+                    >
+                      Save to Gut Journal
+                    </Button>
+                    <Button
+                      onClick={resetScan}
+                      variant="outline"
+                      className="flex-1 bg-transparent"
+                      style={{
+                        borderColor: "var(--theme-border)",
+                        color: "var(--theme-text)",
+                      }}
+                    >
+                      Scan Another
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
