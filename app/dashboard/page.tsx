@@ -174,8 +174,8 @@ export default function DashboardPage() {
       const data = await response.json()
       console.log("[v0] Webhook response data:", data)
 
-      if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        const output = data[0].output
+      if (data && data.output) {
+        const output = data.output
 
         if (output.status === "success" && output.food) {
           setDetectedFoods(output.food)
