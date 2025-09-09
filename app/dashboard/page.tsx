@@ -151,7 +151,7 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "/api/food-scan-fallback"
+      const n8nWebhookUrl = "https://john09lim.app.n8n.cloud/webhook-test/GUT GUARD AI"
 
       const response = await fetch(n8nWebhookUrl, {
         method: "POST",
@@ -164,9 +164,11 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      setDetectedFoods(data.food || [])
-      setScanTotals(data.total || null)
-      setScanMeta(data.meta || null)
+      const result = Array.isArray(data) ? data[0]?.output : data
+
+      setDetectedFoods(result?.food || [])
+      setScanTotals(result?.total || null)
+      setScanMeta(result?.meta || null)
       setScanState("results")
     } catch (error) {
       console.error("Food scan error:", error)
