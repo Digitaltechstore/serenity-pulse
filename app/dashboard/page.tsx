@@ -132,6 +132,7 @@ export default function DashboardPage() {
   const [scanTotals, setScanTotals] = useState<any>(null)
   const [scanMeta, setScanMeta] = useState<any>(null)
   const [capturedImageFile, setCapturedImageFile] = useState<string | null>(null)
+  const [analysisError, setAnalysisError] = useState<string>("")
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -460,7 +461,7 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", imageFile)
 
-      const response = await fetch("/api/food-scan", {
+      const response = await fetch("https://john09lim.app.n8n.cloud/webhook-test/GUT GUARD AI", {
         method: "POST",
         body: formData,
       })
@@ -471,13 +472,34 @@ export default function DashboardPage() {
 
       const data = await response.json()
 
-      setDetectedFoods(data.foods || [])
-      setGutScore(data.score || 0)
-      setScoreReasons(data.reasons || [])
-      setScoreAdvice(data.advice || "")
+      if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        const output = data[0].output
+
+        if (output.status === "success" && output.food) {
+          // Convert food items to the expected format
+          const foods = output.food.map((item: any) => ({
+            name: item.name,
+            confidence: 0.9, // Default confidence since not provided in new format
+            quantity: item.quantity,
+            calories: item.calories,
+            protein: item.protein,
+            carbs: item.carbs,
+            fat: item.fat,
+          }))
+
+          setDetectedFoods(foods)
+
+          // Calculate gut score using the detected foods
+          await calculateGutScore(foods)
+        } else {
+          throw new Error("Invalid response format or failed analysis")
+        }
+      } else {
+        throw new Error("Unexpected response format")
+      }
     } catch (error) {
-      console.error("Food analysis error:", error)
-      alert("Analysis failed. Please try again.")
+      console.error("[v0] Food analysis error:", error)
+      setAnalysisError(error instanceof Error ? error.message : "Analysis failed")
     } finally {
       setIsAnalyzing(false)
     }
@@ -651,6 +673,25 @@ export default function DashboardPage() {
     if (Object.values(symptoms).some((s) => s > 5))
       recs.push("Monitor symptoms closely and consider consulting a healthcare provider")
     return recs.length > 0 ? recs : ["Keep up the great work with your gut health routine!"]
+  }
+
+  const calculateGutScore = async (foods: Array<{ name: string; confidence: number }>) => {
+    try {
+      const response = await fetch("/api/food-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ foods }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setGutScore(data.score)
+        setScoreReasons(data.reasons)
+        setScoreAdvice(data.advice)
+      }
+    } catch (error) {
+      console.error("Score recomputation error:", error)
+    }
   }
 
   if (loading) {
