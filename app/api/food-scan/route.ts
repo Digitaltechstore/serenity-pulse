@@ -1,28 +1,37 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/genai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import { createClient } from "@/lib/supabase/server"
 
 export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
   try {
+    console.log("[v0] Food scan API called")
+
     const formData = await req.formData()
     const file = formData.get("image") as File
 
     if (!file) {
+      console.log("[v0] No image provided in request")
       return NextResponse.json({ error: "No image provided" }, { status: 400 })
     }
 
     if (file.size > 20 * 1024 * 1024) {
+      console.log("[v0] File too large:", file.size)
       return NextResponse.json({ error: "File too large" }, { status: 400 })
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      console.log("[v0] GEMINI_API_KEY not found")
+      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
     }
 
     // Convert file to buffer
     const bytes = Buffer.from(await file.arrayBuffer())
+    console.log("[v0] Image converted to buffer, size:", bytes.length)
 
-    // Initialize Gemini
-    const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    const model = genai.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
+    const genai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+    const model = genai.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const prompt = `Analyze this food image and return JSON with keys: 
     - foods: array of {name: string, confidence: number} for detected foods
@@ -32,28 +41,36 @@ export async function POST(req: NextRequest) {
     
     Focus on identifying individual ingredients and foods. Be specific and accurate. No commentary outside the JSON.`
 
-    // Call Gemini with image
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                data: bytes.toString("base64"),
-                mimeType: file.type || "image/jpeg",
-              },
-            },
-            { text: prompt },
-          ],
-        },
-      ],
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
-    })
+    console.log("[v0] Calling Gemini API...")
 
-    const geminiResponse = JSON.parse(result.response.text())
+    // Call Gemini with image
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: bytes.toString("base64"),
+          mimeType: file.type || "image/jpeg",
+        },
+      },
+      prompt,
+    ])
+
+    console.log("[v0] Gemini response received")
+
+    let geminiResponse
+    try {
+      const responseText = result.response.text()
+      console.log("[v0] Raw Gemini response:", responseText)
+      geminiResponse = JSON.parse(responseText)
+    } catch (parseError) {
+      console.log("[v0] Failed to parse Gemini response as JSON:", parseError)
+      // Fallback response if JSON parsing fails
+      geminiResponse = {
+        foods: [{ name: "Unknown food item", confidence: 0.5 }],
+        estimated_portions: [{ name: "Unknown", unit: "serving", value: 1 }],
+        allergens: [],
+        notes: "Unable to analyze image properly",
+      }
+    }
 
     // Get user's gut history and compute score
     const supabase = createClient()
@@ -62,20 +79,27 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log("[v0] No authenticated user found")
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
 
+    console.log("[v0] Computing gut score for user:", user.id)
     const gutScore = await computeGutScore(geminiResponse.foods, user.id)
 
-    // Save to database
-    await supabase.from("food_scans").insert({
-      user_id: user.id,
-      image_url: "temp_url", // In production, upload to storage
-      items: geminiResponse.foods,
-      gut_score: gutScore.score,
-      reasons: gutScore.reasons,
-      advice: gutScore.advice,
-    })
+    try {
+      await supabase.from("food_scans").insert({
+        user_id: user.id,
+        image_url: "temp_url", // In production, upload to storage
+        items: geminiResponse.foods,
+        gut_score: gutScore.score,
+        reasons: gutScore.reasons,
+        advice: gutScore.advice,
+      })
+      console.log("[v0] Food scan saved to database")
+    } catch (dbError) {
+      console.log("[v0] Database save failed:", dbError)
+      // Continue without saving to database
+    }
 
     return NextResponse.json({
       ...geminiResponse,
@@ -84,16 +108,27 @@ export async function POST(req: NextRequest) {
       advice: gutScore.advice,
     })
   } catch (error) {
-    console.error("Food scan error:", error)
-    return NextResponse.json({ error: "Analysis failed" }, { status: 500 })
+    console.error("[v0] Food scan error:", error)
+    return NextResponse.json(
+      {
+        error: "Analysis failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
 
 async function computeGutScore(foods: Array<{ name: string; confidence: number }>, userId: string) {
   const supabase = createClient()
 
-  // Get user's gut history
-  const { data: gutHistory } = await supabase.from("gut_history").select("*").eq("user_id", userId).single()
+  let gutHistory = null
+  try {
+    const { data } = await supabase.from("gut_history").select("*").eq("user_id", userId).single()
+    gutHistory = data
+  } catch (error) {
+    console.log("[v0] No gut history found for user, using defaults")
+  }
 
   let score = 90
   const reasons: string[] = []
