@@ -162,6 +162,7 @@ export default function DashboardPage() {
         headers: {
           Accept: "application/json",
         },
+        mode: "cors",
       })
 
       console.log("[v0] Webhook response status:", response.status)
@@ -173,15 +174,22 @@ export default function DashboardPage() {
       const data = await response.json()
       console.log("[v0] Webhook response data:", data)
 
-      const result = Array.isArray(data) ? data[0]?.output : data
+      if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        const output = data[0].output
 
-      setDetectedFoods(result?.food || [])
-      setScanTotals(result?.total || null)
-      setScanMeta(result?.meta || null)
-      setScanState("results")
+        if (output.status === "success" && output.food) {
+          setDetectedFoods(output.food)
+          setScanTotals(output.total || null)
+          setScanState("results")
+        } else {
+          throw new Error("Analysis failed or returned error status")
+        }
+      } else {
+        throw new Error("Unexpected response format")
+      }
     } catch (error) {
       console.error("Food scan error:", error)
-      setScanError("Analysis failed. Please try again.")
+      setScanError(error instanceof Error ? error.message : "Analysis failed. Please try again.")
       setScanState("error")
     }
   }
@@ -469,9 +477,13 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", imageFile)
 
-      const response = await fetch("https://john09lim.app.n8n.cloud/webhook-test/GUT GUARD AI", {
+      const response = await fetch("https://john09lim.app.n8n.cloud/webhook-test/GUT%20GUARD%20AI", {
         method: "POST",
         body: formData,
+        headers: {
+          Accept: "application/json",
+        },
+        mode: "cors",
       })
 
       if (!response.ok) {
