@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,12 +9,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid foods data" }, { status: 400 })
     }
 
-    // Mock gut history for now - in production, fetch from database
-    const mockGutHistory = {
+    const supabaseUrl = "https://atsajxerbamujdflueel.supabase.co"
+    const supabaseKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0c2FqeGVyYmFtdWpkZmx1ZWVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NTcxNTgsImV4cCI6MjA3MjUzMzE1OH0.8OfHXQF_9jSpJe7d825tJAbR-TEZ0Tbc0dpFE9SEGq8"
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    let gutHistory = {
       sensitivities: ["gluten", "dairy", "spicy foods"],
       conditions: ["IBS", "acid reflux"],
       triggers: ["high fiber", "processed foods"],
       preferences: ["low FODMAP", "anti-inflammatory"],
+    }
+
+    try {
+      const { data: user } = await supabase.auth.getUser()
+      if (user?.user) {
+        // Fetch recent gut history from logs
+        const { data: logs } = await supabase
+          .from("gut_logs")
+          .select("*")
+          .eq("user_id", user.user.id)
+          .order("created_at", { ascending: false })
+          .limit(30)
+
+        if (logs && logs.length > 0) {
+          // Analyze logs to extract patterns
+          const symptoms = logs.flatMap((log) => log.symptoms || [])
+          const triggers = logs.flatMap((log) => log.triggers || [])
+          const notes = logs.map((log) => log.notes).filter(Boolean)
+
+          gutHistory = {
+            sensitivities: [...new Set(triggers)],
+            conditions: [...new Set(symptoms)],
+            triggers: [...new Set(triggers)],
+            preferences: ["based on recent logs"],
+            recentSymptoms: symptoms.slice(0, 10),
+            recentNotes: notes.slice(0, 5),
+          }
+        }
+      }
+    } catch (dbError) {
+      console.error("Database error, using fallback:", dbError)
     }
 
     // Calculate Gut Guard Score using DeepSeek API
@@ -40,27 +76,41 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: "user",
-              content: `Analyze this meal for gut health impact. Foods: ${foods.map((f) => f.name).join(", ")}. 
-            User gut history: ${JSON.stringify(mockGutHistory)}. 
-            Nutritional totals: ${JSON.stringify(totals)}.
-            
-            Provide a Gut Guard Score (0-100) where:
-            - 80-100: Gut friendly, supports digestive health
-            - 50-79: Moderate risk, some potential issues
-            - 0-49: High risk, likely to cause digestive problems
-            
-            Consider: fiber content, inflammatory foods, FODMAP levels, processing level, gut microbiome impact.
-            
-            Return JSON format:
-            {
-              "score": number,
-              "reasons": ["reason1", "reason2"],
-              "advice": "personalized advice string"
-            }`,
+              content: `As a gut health expert, analyze this meal for digestive impact based on scientific research.
+
+FOODS DETECTED: ${foods.map((f) => `${f.name} (${f.quantity || "unknown quantity"})`).join(", ")}
+
+NUTRITIONAL TOTALS: 
+- Calories: ${totals?.calories || "unknown"}
+- Protein: ${totals?.protein || "unknown"}g
+- Carbs: ${totals?.carbs || "unknown"}g  
+- Fat: ${totals?.fat || "unknown"}g
+
+USER GUT HISTORY:
+${JSON.stringify(gutHistory, null, 2)}
+
+Provide a Gut Guard Score (0-100) based on:
+- Fiber content and gut microbiome support
+- Inflammatory potential of ingredients
+- FODMAP levels for sensitive individuals
+- Processing level and additives
+- Compatibility with user's known triggers/sensitivities
+
+Score ranges:
+- 80-100: Excellent for gut health, supports microbiome
+- 50-79: Moderate impact, some considerations needed
+- 0-49: High risk for digestive issues
+
+Return ONLY valid JSON (no markdown formatting):
+{
+  "score": number,
+  "reasons": ["specific reason 1", "specific reason 2", "specific reason 3"],
+  "advice": "personalized advice based on user history and food analysis"
+}`,
             },
           ],
-          temperature: 0.7,
-          max_tokens: 500,
+          temperature: 0.3,
+          max_tokens: 600,
         }),
       })
 
@@ -75,8 +125,16 @@ export async function POST(request: NextRequest) {
         throw new Error("No content in DeepSeek response")
       }
 
+      let cleanContent = content.trim()
+      if (cleanContent.startsWith("```json")) {
+        cleanContent = cleanContent.replace(/^```json\s*/, "").replace(/\s*```$/, "")
+      }
+      if (cleanContent.startsWith("```")) {
+        cleanContent = cleanContent.replace(/^```\s*/, "").replace(/\s*```$/, "")
+      }
+
       // Parse JSON response from DeepSeek
-      const analysis = JSON.parse(content)
+      const analysis = JSON.parse(cleanContent)
 
       return NextResponse.json({
         score: Math.max(0, Math.min(100, analysis.score || 50)),
