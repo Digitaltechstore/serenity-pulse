@@ -134,6 +134,11 @@ export default function DashboardPage() {
   const [capturedImageFile, setCapturedImageFile] = useState<string | null>(null)
   const [analysisError, setAnalysisError] = useState<string>("")
 
+  const [isAnalyzingGut, setIsAnalyzingGut] = useState(false)
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false)
+  const [gutJournalEntries, setGutJournalEntries] = useState([])
+  const [showGutJournal, setShowGutJournal] = useState(false)
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -193,6 +198,9 @@ export default function DashboardPage() {
   const analyzeForMyGut = async () => {
     if (detectedFoods.length === 0) return
 
+    setIsAnalyzingGut(true)
+    setScanError("")
+
     try {
       const response = await fetch("/api/gut-score", {
         method: "POST",
@@ -215,6 +223,8 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Gut score error:", error)
       setScanError("Gut analysis failed. Please try again.")
+    } finally {
+      setIsAnalyzingGut(false)
     }
   }
 
@@ -243,17 +253,32 @@ export default function DashboardPage() {
           gutScore,
           reasons: scoreReasons,
           advice: scoreAdvice,
+          timestamp: new Date().toISOString(),
         }),
       })
 
       if (response.ok) {
-        alert("Saved to Gut Journal!")
-        resetScan()
+        const newEntry = {
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          foods: detectedFoods,
+          totals: scanTotals,
+          gutScore,
+          reasons: scoreReasons,
+          advice: scoreAdvice,
+        }
+        setGutJournalEntries((prev) => [newEntry, ...prev])
+        setShowSaveConfirmation(true)
+        setTimeout(() => setShowSaveConfirmation(false), 3000)
       }
     } catch (error) {
       console.error("Save error:", error)
-      alert("Failed to save. Please try again.")
+      setScanError("Failed to save. Please try again.")
     }
+  }
+
+  const loadGutJournal = () => {
+    setShowGutJournal(!showGutJournal)
   }
 
   const resetScan = () => {
@@ -913,6 +938,38 @@ export default function DashboardPage() {
         Scan Food
       </h2>
 
+      {showSaveConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
+            <CardContent className="p-6 text-center">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                  Saved to Gut Journal!
+                </h3>
+                <p className="text-sm mb-4" style={{ color: "var(--theme-text-secondary)" }}>
+                  Your food analysis has been saved successfully.
+                </p>
+                <Button
+                  onClick={loadGutJournal}
+                  style={{
+                    backgroundColor: "var(--theme-primary)",
+                    color: "white",
+                    border: "none",
+                  }}
+                >
+                  View Gut Journal
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {scanState === "idle" && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-6 text-center">
@@ -935,33 +992,98 @@ export default function DashboardPage() {
                   onChange={handleImageUpload}
                   className="hidden"
                 />
-                <div
-                  className="w-full py-3 px-4 rounded-lg border-2 border-dashed cursor-pointer hover:opacity-80 transition-opacity"
+                <Button
+                  className="w-full"
                   style={{
                     backgroundColor: "var(--theme-primary)",
-                    borderColor: "var(--theme-primary)",
                     color: "white",
+                    border: "none",
                   }}
                 >
-                  <Camera className="h-5 w-5 inline mr-2" />
+                  <Camera className="h-5 w-5 mr-2" />
                   Take Photo
-                </div>
+                </Button>
               </label>
 
               <label className="block">
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                <div
-                  className="w-full py-3 px-4 rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+                <Button
+                  variant="outline"
+                  className="w-full bg-transparent"
                   style={{
                     borderColor: "var(--theme-border)",
                     color: "var(--theme-text)",
-                    backgroundColor: "transparent",
                   }}
                 >
-                  <Upload className="h-5 w-5 inline mr-2" />
+                  <Upload className="h-5 w-5 mr-2" />
                   Upload Photo
-                </div>
+                </Button>
               </label>
+            </div>
+
+            <div className="mt-8 pt-6" style={{ borderTop: `1px solid var(--theme-border)` }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold" style={{ color: "var(--theme-text)" }}>
+                  Gut Journal
+                </h3>
+                <Button
+                  onClick={loadGutJournal}
+                  variant="outline"
+                  size="sm"
+                  className="bg-transparent"
+                  style={{
+                    borderColor: "var(--theme-border)",
+                    color: "var(--theme-text)",
+                  }}
+                >
+                  {showGutJournal ? "Hide" : "View All"} ({gutJournalEntries.length})
+                </Button>
+              </div>
+
+              {showGutJournal && (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {gutJournalEntries.length === 0 ? (
+                    <p className="text-sm text-center py-4" style={{ color: "var(--theme-text-secondary)" }}>
+                      No entries yet. Start scanning food to build your gut journal!
+                    </p>
+                  ) : (
+                    gutJournalEntries.map((entry) => (
+                      <Card
+                        key={entry.id}
+                        style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium" style={{ color: "var(--theme-text)" }}>
+                                {entry.foods.map((f) => f.name).join(", ")}
+                              </p>
+                              <p className="text-xs" style={{ color: "var(--theme-text-secondary)" }}>
+                                {new Date(entry.timestamp).toLocaleDateString()} at{" "}
+                                {new Date(entry.timestamp).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                entry.gutScore >= 80
+                                  ? "bg-green-100 text-green-800"
+                                  : entry.gutScore >= 50
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {entry.gutScore}/100
+                            </div>
+                          </div>
+                          <p className="text-xs" style={{ color: "var(--theme-text-secondary)" }}>
+                            {entry.totals.calories} cal • {entry.totals.protein}g protein • {entry.totals.carbs}g carbs
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
