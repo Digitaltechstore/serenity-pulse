@@ -1157,33 +1157,33 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-3">
+              {/* Add function to trigger file input click */}
               <Button
                 onClick={handleTakePhoto}
+                disabled={isStartingCamera}
                 className="w-full"
                 style={{
                   backgroundColor: "var(--theme-primary)",
                   color: "white",
-                  border: "none",
                 }}
               >
                 <Camera className="h-5 w-5 mr-2" />
                 Take Photo
               </Button>
 
-              <label className="block">
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                <Button
-                  variant="outline"
-                  className="w-full bg-transparent"
-                  style={{
-                    borderColor: "var(--theme-border)",
-                    color: "var(--theme-text)",
-                  }}
-                >
-                  <Upload className="h-5 w-5 mr-2" />
-                  Upload Photo
-                </Button>
-              </label>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <Button
+                onClick={triggerFileUpload}
+                variant="outline"
+                className="w-full bg-transparent"
+                style={{
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                <Upload className="h-5 w-5 mr-2" />
+                Upload Photo
+              </Button>
             </div>
 
             <div className="mt-8 pt-6" style={{ borderTop: `1px solid var(--theme-border)` }}>
@@ -1472,6 +1472,10 @@ export default function DashboardPage() {
       )}
     </div>
   )
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click()
+  }
 
   const renderLogs = () => (
     <div className="max-w-2xl mx-auto">
