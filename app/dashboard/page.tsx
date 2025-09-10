@@ -417,6 +417,8 @@ export default function DashboardPage() {
   const [dailySummaries, setDailySummaries] = useState<Record<string, any>>({})
   const [showTrends, setShowTrends] = useState(false)
 
+  const [isStartingCamera, setIsStartingCamera] = useState(false)
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -515,7 +517,12 @@ export default function DashboardPage() {
   }
 
   const startCamera = async () => {
+    if (isStartingCamera || cameraStream) {
+      return
+    }
+
     try {
+      setIsStartingCamera(true)
       console.log("[v0] Starting camera for Food Scan...")
 
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -534,11 +541,20 @@ export default function DashboardPage() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        videoRef.current.play()
+        try {
+          await videoRef.current.play()
+        } catch (playError) {
+          // Ignore AbortError as it's expected when interrupted
+          if (playError.name !== "AbortError") {
+            console.error("Video play error:", playError)
+          }
+        }
       }
     } catch (error) {
       console.error("Camera error:", error)
       alert(`Camera access failed: ${error.message}`)
+    } finally {
+      setIsStartingCamera(false)
     }
   }
 
@@ -722,9 +738,14 @@ export default function DashboardPage() {
 
   const stopCamera = () => {
     if (cameraStream) {
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.srcObject = null
+      }
       cameraStream.getTracks().forEach((track) => track.stop())
       setCameraStream(null)
     }
+    setIsStartingCamera(false)
   }
 
   const addFoodEntry = () => {
