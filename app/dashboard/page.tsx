@@ -124,10 +124,9 @@ export default function DashboardPage() {
   const [scoreAdvice, setScoreAdvice] = useState<string>("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showFileInput, setShowFileInput] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [scanState, setScanState] = useState<"idle" | "loading" | "results" | "error">("idle")
+  const [scanState, setScanState] = useState<"idle" | "loading" | "results" | "error" | "camera">("idle")
   const [scanError, setScanError] = useState<string>("")
   const [scanTotals, setScanTotals] = useState<any>(null)
   const [scanMeta, setScanMeta] = useState<any>(null)
@@ -138,6 +137,9 @@ export default function DashboardPage() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false)
   const [gutJournalEntries, setGutJournalEntries] = useState([])
   const [showGutJournal, setShowGutJournal] = useState(false)
+
+  const [showCamera, setShowCamera] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -192,6 +194,106 @@ export default function DashboardPage() {
       console.error("[v0] Food scan error:", error)
       setScanError(`Analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`)
       setScanState("error")
+    }
+  }
+
+  const handleTakePhoto = async () => {
+    try {
+      console.log("[v0] Starting camera...")
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Camera not supported in this browser")
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      })
+
+      setCameraStream(stream)
+      setShowCamera(true)
+      setScanState("camera")
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+      }
+    } catch (error) {
+      console.error("Camera error:", error)
+      setScanError(`Camera access failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setScanState("error")
+    }
+  }
+
+  const capturePhoto = async () => {
+    if (!videoRef.current || !cameraStream) return
+
+    try {
+      const canvas = document.createElement("canvas")
+      const video = videoRef.current
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Canvas context not available")
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      // Convert to blob for upload
+      canvas.toBlob(
+        async (blob) => {
+          if (blob) {
+            setCapturedImageFile(URL.createObjectURL(blob))
+
+            // Stop camera
+            cameraStream.getTracks().forEach((track) => track.stop())
+            setCameraStream(null)
+            setShowCamera(false)
+
+            // Start analysis
+            setScanState("loading")
+
+            const formData = new FormData()
+            formData.append("image", blob)
+
+            const response = await fetch("/api/food-scan-proxy", {
+              method: "POST",
+              body: formData,
+            })
+
+            if (!response.ok) {
+              throw new Error(`Analysis failed: ${response.status}`)
+            }
+
+            const data = await response.json()
+
+            if (data && data.output && data.output.status === "success" && data.output.food) {
+              setDetectedFoods(data.output.food)
+              setScanTotals(data.output.total || null)
+              setScanState("results")
+            } else {
+              throw new Error("Analysis failed")
+            }
+          }
+        },
+        "image/jpeg",
+        0.8,
+      )
+    } catch (error) {
+      console.error("Photo capture error:", error)
+      setScanError(`Failed to capture photo: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setScanState("error")
+
+      // Stop camera on error
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop())
+        setCameraStream(null)
+      }
+      setShowCamera(false)
     }
   }
 
@@ -440,7 +542,7 @@ export default function DashboardPage() {
     }
   }
 
-  const capturePhoto = async () => {
+  const capturePhotoOld = async () => {
     if (!videoRef.current || !cameraStream) return
 
     try {
@@ -970,6 +1072,56 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {scanState === "camera" && (
+        <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
+          <CardContent className="p-6">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
+                Position your food in the camera
+              </h3>
+            </div>
+
+            <div className="relative mb-4">
+              <video ref={videoRef} className="w-full h-64 object-cover rounded-lg bg-gray-200" playsInline muted />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={capturePhoto}
+                className="flex-1"
+                style={{
+                  backgroundColor: "var(--theme-primary)",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                <Camera className="h-5 w-5 mr-2" />
+                Capture Photo
+              </Button>
+
+              <Button
+                onClick={() => {
+                  if (cameraStream) {
+                    cameraStream.getTracks().forEach((track) => track.stop())
+                    setCameraStream(null)
+                  }
+                  setShowCamera(false)
+                  setScanState("idle")
+                }}
+                variant="outline"
+                className="bg-transparent"
+                style={{
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {scanState === "idle" && (
         <Card style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}>
           <CardContent className="p-6 text-center">
@@ -978,32 +1130,24 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
                 Capture Your Meal
               </h3>
-              <p className="mb-6 text-sm" style={{ color: "var(--theme-text-secondary)" }}>
+              <p className="mb-6 text-sm" style={{ color: "var(--theme-text)" }}>
                 Take a photo or upload an image to get your personalized Gut Guard Score
               </p>
             </div>
 
             <div className="space-y-3">
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <Button
-                  className="w-full"
-                  style={{
-                    backgroundColor: "var(--theme-primary)",
-                    color: "white",
-                    border: "none",
-                  }}
-                >
-                  <Camera className="h-5 w-5 mr-2" />
-                  Take Photo
-                </Button>
-              </label>
+              <Button
+                onClick={handleTakePhoto}
+                className="w-full"
+                style={{
+                  backgroundColor: "var(--theme-primary)",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                <Camera className="h-5 w-5 mr-2" />
+                Take Photo
+              </Button>
 
               <label className="block">
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
