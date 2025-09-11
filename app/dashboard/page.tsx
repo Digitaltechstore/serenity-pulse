@@ -159,23 +159,23 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      console.log("[v0] Sending image to AI food analysis")
+      console.log("[v0] Sending image to food scan proxy")
 
-      const response = await fetch("/api/analyze-food-ai", {
+      const response = await fetch("/api/food-scan-proxy", {
         method: "POST",
         body: formData,
       })
 
-      console.log("[v0] AI analysis response status:", response.status)
+      console.log("[v0] Food scan proxy response status:", response.status)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.log("[v0] AI analysis error response:", errorData)
-        throw new Error(errorData.error || `Analysis failed with status ${response.status}`)
+        console.log("[v0] Food scan proxy error response:", errorData)
+        throw new Error(errorData.error || `Analysis failed: ${response.status} - ${JSON.stringify(errorData)}`)
       }
 
       const data = await response.json()
-      console.log("[v0] AI analysis response data:", data)
+      console.log("[v0] Food scan proxy response data:", data)
 
       if (data && data.success && data.data) {
         const analysisData = data.data
