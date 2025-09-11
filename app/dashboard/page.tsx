@@ -1363,26 +1363,159 @@ export default function DashboardPage() {
               </div>
 
               {scanTotals && (
-                <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: "#f8f9fa" }}>
-                  <h4 className="font-semibold mb-2" style={{ color: "var(--theme-text)" }}>
-                    Totals
-                  </h4>
-                  <div className="text-sm" style={{ color: "var(--theme-text-secondary)" }}>
-                    {JSON.stringify(scanTotals, null, 2)}
-                  </div>
-                </div>
+                <Card
+                  style={{ backgroundColor: "var(--theme-surface)", borderColor: "var(--theme-border)" }}
+                  className="mb-4"
+                >
+                  <CardContent className="p-6">
+                    <h4 className="font-semibold mb-4 text-center" style={{ color: "var(--theme-text)" }}>
+                      Nutritional Breakdown
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Calories */}
+                      <div className="text-center">
+                        <div className="relative w-20 h-20 mx-auto mb-2">
+                          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="2"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#f59e0b"
+                              strokeWidth="2"
+                              strokeDasharray={`${Math.min((scanTotals.calories / 500) * 100, 100)}, 100`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-bold" style={{ color: "var(--theme-text)" }}>
+                              {scanTotals.calories}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+                          Calories
+                        </div>
+                      </div>
+
+                      {/* Protein */}
+                      <div className="text-center">
+                        <div className="relative w-20 h-20 mx-auto mb-2">
+                          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="2"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#10b981"
+                              strokeWidth="2"
+                              strokeDasharray={`${Math.min((scanTotals.protein / 50) * 100, 100)}, 100`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-bold" style={{ color: "var(--theme-text)" }}>
+                              {scanTotals.protein}g
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: "#10b981" }}>
+                          Protein
+                        </div>
+                      </div>
+
+                      {/* Carbs */}
+                      <div className="text-center">
+                        <div className="relative w-20 h-20 mx-auto mb-2">
+                          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="2"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#3b82f6"
+                              strokeWidth="2"
+                              strokeDasharray={`${Math.min((scanTotals.carbs / 100) * 100, 100)}, 100`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-bold" style={{ color: "var(--theme-text)" }}>
+                              {scanTotals.carbs}g
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: "#3b82f6" }}>
+                          Carbs
+                        </div>
+                      </div>
+
+                      {/* Fat */}
+                      <div className="text-center">
+                        <div className="relative w-20 h-20 mx-auto mb-2">
+                          <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="2"
+                            />
+                            <path
+                              d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="#8b5cf6"
+                              strokeWidth="2"
+                              strokeDasharray={`${Math.min((scanTotals.fat / 30) * 100, 100)}, 100`}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-sm font-bold" style={{ color: "var(--theme-text)" }}>
+                              {scanTotals.fat}g
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: "#8b5cf6" }}>
+                          Fat
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               <Button
+                disabled={detectedFoods.length === 0 || isAnalyzingGut}
                 onClick={analyzeForMyGut}
-                className="w-full"
+                className="w-full mb-4"
                 style={{
-                  backgroundColor: "var(--theme-primary)",
+                  backgroundColor: isAnalyzingGut ? "#6b7280" : "var(--theme-primary)",
                   color: "white",
                   border: "none",
                 }}
               >
-                Analyze for My Gut
+                {isAnalyzingGut ? "Analyzing..." : "Analyze for My Gut"}
+              </Button>
+
+              <Button
+                onClick={resetScan}
+                variant="outline"
+                className="w-full bg-transparent"
+                style={{
+                  borderColor: "var(--theme-border)",
+                  color: "var(--theme-text)",
+                }}
+              >
+                Scan Another Food
               </Button>
             </CardContent>
           </Card>
@@ -1441,28 +1574,17 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={saveToGutJournal}
-                    className="flex-1"
-                    style={{
-                      backgroundColor: "var(--theme-primary)",
-                      color: "white",
-                      border: "none",
-                    }}
-                  >
-                    Save to Gut Journal
-                  </Button>
+                <div className="flex justify-center">
                   <Button
                     onClick={resetScan}
                     variant="outline"
-                    className="flex-1 bg-transparent"
+                    className="bg-transparent"
                     style={{
                       borderColor: "var(--theme-border)",
                       color: "var(--theme-text)",
                     }}
                   >
-                    Scan Another
+                    Scan Another Food
                   </Button>
                 </div>
               </CardContent>
