@@ -159,36 +159,33 @@ export default function DashboardPage() {
       const formData = new FormData()
       formData.append("image", file)
 
-      console.log("[v0] Sending image via server proxy")
+      console.log("[v0] Sending image to AI food analysis")
 
-      const response = await fetch("/api/food-scan-proxy", {
+      const response = await fetch("/api/analyze-food-ai", {
         method: "POST",
         body: formData,
       })
 
-      console.log("[v0] Proxy response status:", response.status)
+      console.log("[v0] AI analysis response status:", response.status)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.log("[v0] Proxy error response:", errorData)
+        console.log("[v0] AI analysis error response:", errorData)
         throw new Error(errorData.error || `Analysis failed with status ${response.status}`)
       }
 
       const data = await response.json()
-      console.log("[v0] Proxy response data:", data)
+      console.log("[v0] AI analysis response data:", data)
 
-      if (data && data.output) {
-        const output = data.output
+      if (data && data.success && data.data) {
+        const analysisData = data.data
 
-        if (output.status === "success" && output.food) {
-          setDetectedFoods(output.food)
-          setScanTotals(output.total || null)
-          setScanState("results")
-        } else {
-          throw new Error(output.message || "Analysis failed or returned error status")
-        }
+        // Convert AI response format to expected format
+        setDetectedFoods(analysisData.foods)
+        setScanTotals(analysisData.totals)
+        setScanState("results")
       } else {
-        throw new Error("Unexpected response format from food analysis service")
+        throw new Error("Analysis failed or returned unexpected format")
       }
     } catch (error) {
       console.error("[v0] Food scan error:", error)
